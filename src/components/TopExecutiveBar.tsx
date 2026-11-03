@@ -6,7 +6,9 @@ import {
   RotateCcw, 
   Flame, 
   Zap, 
-  FileText 
+  FileText,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { SCENARIO_PRESETS, ScenarioInfo } from '../engine/scenarioPresets';
 
@@ -20,6 +22,8 @@ interface TopExecutiveBarProps {
   tdcg: number;
   celluloseRatio: number;
   paperRisk: 'Low' | 'Moderate' | 'High';
+  isDarkMode?: boolean;
+  onToggleTheme?: () => void;
   ieeeStatus?: any;
   activeZoneCode?: string;
 }
@@ -34,6 +38,8 @@ export const TopExecutiveBar: React.FC<TopExecutiveBarProps> = ({
   tdcg,
   celluloseRatio,
   paperRisk,
+  isDarkMode = true,
+  onToggleTheme,
 }) => {
   const scenariosList = Object.values(SCENARIO_PRESETS);
 
@@ -90,6 +96,26 @@ export const TopExecutiveBar: React.FC<TopExecutiveBarProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Light / Dark Mode Toggle */}
+          <button
+            onClick={onToggleTheme}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all font-mono text-xs bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200 cursor-pointer shadow-sm hover:bg-slate-800"
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle Light and Dark Mode"
+          >
+            {isDarkMode ? (
+              <>
+                <Sun className="w-4 h-4 text-amber-400" />
+                <span className="font-bold text-slate-200 text-[11px]">Light Mode</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-4 h-4 text-cyan-400" />
+                <span className="font-bold text-slate-700 text-[11px]">Dark Mode</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 

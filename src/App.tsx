@@ -10,7 +10,6 @@ import {
   GasReadings,
   GasKey,
   GAS_NAMES,
-  checkIEEELimits,
   calculateTDCG,
   calculateDuvalCoordinates,
   checkCelluloseDegradation,
@@ -30,6 +29,34 @@ export const App: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [noiseEnabled, setNoiseEnabled] = useState<boolean>(false);
   const [isCustomMode, setIsCustomMode] = useState<boolean>(false);
+
+  // --- Theme State (Defaults to Dark Mode, remembers preference) ---
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('theme');
+      return saved ? saved === 'dark' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+    } catch {
+      // ignore in environments without localStorage
+    }
+  }, [isDarkMode]);
+
+  const handleToggleTheme = () => {
+    setIsDarkMode((prev) => !prev);
+  };
 
   // Full 24-hour sequence buffer
   const [fullSequence, setFullSequence] = useState<TelemetryPoint[]>(() =>
@@ -73,7 +100,6 @@ export const App: React.FC = () => {
   }, [fullSequence, playbackHour]);
 
   // 2. Standards Validation
-  const ieeeStatus = useMemo(() => checkIEEELimits(currentGases), [currentGases]);
   const tdcgResult = useMemo(() => calculateTDCG(currentGases), [currentGases]);
   const duvalCoords = useMemo(
     () => calculateDuvalCoordinates(currentGases.CH4, currentGases.C2H4, currentGases.C2H2),
@@ -171,11 +197,11 @@ export const App: React.FC = () => {
         onTogglePlay={handleTogglePlay}
         onReset={handleResetTimeline}
         playbackHour={playbackHour}
-        ieeeStatus={ieeeStatus}
         tdcg={tdcgResult.tdcg}
         celluloseRatio={celluloseResult.ratio}
         paperRisk={celluloseResult.risk}
-        activeZoneCode={duvalCoords.zoneCode}
+        isDarkMode={isDarkMode}
+        onToggleTheme={handleToggleTheme}
       />
 
       {/* Main Workspace Layout */}
