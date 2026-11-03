@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Github } from 'lucide-react';
 import { TopExecutiveBar } from './components/TopExecutiveBar';
 import { GasControlSliders } from './components/GasControlSliders';
 import { DuvalTrianglePlot } from './components/DuvalTrianglePlot';
@@ -272,10 +273,16 @@ export const App: React.FC = () => {
           </div>
 
           {/* Substation Footer */}
-          <footer className="text-center text-[11px] font-mono text-slate-500 py-1 border-t border-slate-200 dark:border-slate-900 mt-0.5 flex flex-col sm:flex-row items-center justify-center">
-            <div>
-              ⚡ <strong>Substation Digital Twin v2.0</strong> &bull; IEEE C57.104-2019 / IEC 60599 &bull; 1D-CNN Diagnostic Engine
-            </div>
+          <footer className="text-center text-[11px] font-mono py-1.5 border-t border-slate-200 dark:border-slate-800 mt-0.5 flex items-center justify-center">
+            <a
+              href="https://github.com/anish609609/transformer_health_using_gas_sensors"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-slate-500 hover:text-cyan-600 dark:text-slate-400 dark:hover:text-cyan-400 transition"
+            >
+              <Github className="w-3.5 h-3.5" />
+              <span>GitHub Repository &bull; anish609609/transformer_health_using_gas_sensors</span>
+            </a>
           </footer>
         </main>
       </div>

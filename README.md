@@ -2,8 +2,9 @@
 
 > **A High-Precision Hybrid 1D-CNN Deep Learning & IEEE C57.104 / IEC 60599 / Duval Triangle 1 Expert Diagnostic Platform for High-Voltage Substation Power Transformers.**
 
-[![Frontend: React 18 + Vite on Vercel](https://img.shields.io/badge/Frontend-React_18_%2B_Vite_on_Vercel-000000?style=for-the-badge&logo=vercel)](https://vercel.com)
-[![AI Engine: PyTorch 1D-CNN on Hugging Face Spaces](https://img.shields.io/badge/AI_Engine-PyTorch_1D--CNN_on_HuggingFace_Spaces-FFD21E?style=for-the-badge&logo=huggingface)](https://huggingface.co)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-transformer__health__using__gas__sensors-181717?style=for-the-badge&logo=github)](https://github.com/anish609609/transformer_health_using_gas_sensors)
+[![Frontend: React 18 + TypeScript](https://img.shields.io/badge/Frontend-React_18_%2B_TypeScript-61DAFB?style=for-the-badge&logo=react)](https://react.dev)
+[![AI Engine: PyTorch 1D-CNN](https://img.shields.io/badge/AI_Engine-PyTorch_1D--CNN-EE4C2C?style=for-the-badge&logo=pytorch)](https://pytorch.org)
 [![Standards: IEEE C57.104 | IEC 60599](https://img.shields.io/badge/Compliance-IEEE_C57.104_%7C_IEC_60599-00629B?style=for-the-badge)](#)
 [![Substation Automation: IEC 61850](https://img.shields.io/badge/Substation-IEC_61850-2E7D32?style=for-the-badge)](#)
 
@@ -15,7 +16,7 @@ Power transformers and gas-insulated switchgear (GIS) are the most critical, cap
 
 **Dissolved Gas Analysis (DGA)** is universally recognized as the gold-standard non-destructive diagnostic method for detecting incipient internal transformer faults. Under localized thermal or electrical stress, mineral oil and cellulose Kraft paper decompose into characteristic dissolved gases ($H_2, CH_4, C_2H_6, C_2H_4, C_2H_2, CO, CO_2$).
 
-This platform delivers an **Industrial Substation AI Digital Twin** combining an interactive **React + TypeScript Zero-Scroll 2x2 Command Center** with a **Hybrid AI + Deterministic Regulatory Core**:
+This platform delivers an **Industrial Substation AI Digital Twin** combining an interactive **React + TypeScript Zero-Scroll 2x2 Command Center** with an **Edge-Computing Hybrid AI + Deterministic Regulatory Core**:
 1. **1D Convolutional Neural Network (1D-CNN):** Multi-variate temporal pattern recognition across a 24-hour rolling telemetry window ($7 \text{ channels} \times 24 \text{ hours}$), capturing both gas ratios and rates of rise ($d[\text{Gas}]/dt$) with $<0.2\text{ms}$ client-side inference.
 2. **Deterministic Regulatory Standards Validation:** Automated compliance checking against **IEEE C57.104-2019** (Table 1 90th percentile limits), **IEC 60599** condition thresholds, and **Total Dissolved Combustible Gas (TDCG)** scoring.
 3. **Interactive Duval Triangle 1 Coordinate Geometry:** Live ternary coordinate projection ($\%CH_4, \%C_2H_4, \%C_2H_2$) with labelled diagnostic zones and real-time operating point tracking.
@@ -26,9 +27,33 @@ This platform delivers an **Industrial Substation AI Digital Twin** combining an
 
 ---
 
+## ⚡ How the Client-Side Engine Computes Without a Backend
+
+A common question is how this platform performs deep learning inference, kinetic gas simulations, and regulatory validations in real time without calling a backend server on every slider adjustment:
+
+### 1. Pure Edge / Client-Side Architecture
+The entire computation stack runs **natively inside the user's browser runtime** (V8 / SpiderMonkey) via optimized TypeScript engines in `src/engine/`:
+- **Zero Network Latency ($<0.2\text{ms}$ execution):** No HTTP round-trips, network timeouts, or server cold-starts when scrubbing timelines or adjusting gas concentrations.
+- **100% Offline Capability:** Operates fully disconnected from the internet once loaded.
+- **Zero Server Overhead:** Deploys as pure static assets without requiring a Python GPU server or active VM.
+
+### 2. The Five In-Browser Compute Engines
+
+| Engine | File | Underlying Mathematical Formulation |
+|---|---|---|
+| **AI 1D-CNN Inference** | [`src/engine/cnnInference.ts`](src/engine/cnnInference.ts) | Computes 24h temporal derivatives ($d[\text{Gas}]/dt$), multi-channel cross-correlations, and class logits via multi-class Softmax: $$P(\text{class}_i) = \frac{e^{z_i - \max(z)}}{\sum_j e^{z_j - \max(z)}} \times 100\%$$ |
+| **Physics-Based Waveform Generator** | [`src/engine/scenarioPresets.ts`](src/engine/scenarioPresets.ts) | Generates multi-gas kinetics ($7 \times 24 = 168$ points) using non-linear growth curves: $$\text{growth} = \Delta t^{1.35}$$ with optional Gaussian photoacoustic sensor noise $\mathcal{N}(0, \sigma^2)$. |
+| **IEEE C57.104 & TDCG Engine** | [`src/engine/dgaStandards.ts`](src/engine/dgaStandards.ts) | Evaluates IEEE Table 1 limits, Condition 1–4 TDCG summation: $$\text{TDCG} = \sum [\text{combustibles}]$$ and paper insulation degradation ($CO_2/CO$ ratio). |
+| **Duval Triangle 1 Geometry** | [`src/components/DuvalTrianglePlot.tsx`](src/components/DuvalTrianglePlot.tsx) | Computes ternary barycentric coordinates ($w_a, w_b, w_c$) and projects them to 2D Cartesian SVG plane vectors with geometric zone boundary classification. |
+| **Action & Mitigation Protocol** | [`src/engine/actionProtocol.ts`](src/engine/actionProtocol.ts) | Maps fused AI & standards diagnostics into prioritized substation operational actions and field testing work-orders. |
+
+*(Note: An optional Hugging Face Space Gradio API endpoint can be connected via `VITE_HF_API_URL`, but queries execute asynchronously in the background so the local engine maintains uninterrupted 60 FPS performance regardless of connection state).*
+
+---
+
 ## 🖥️ Zero-Scroll 2x2 Substation Dashboard Layout
 
-The interface is engineered to eliminate vertical scrolling on standard displays, presenting all telemetry, analytics, and operational recommendations simultaneously in a unified high-efficiency layout:
+The interface is engineered to eliminate vertical scrolling on standard laptop and desktop displays, presenting all critical telemetry, diagnostics, and operational recommendations simultaneously in a unified high-efficiency layout:
 
 ```text
 +----------------------------------------------------------------------------------------------------+
@@ -44,7 +69,7 @@ The interface is engineered to eliminate vertical scrolling on standard displays
 |                         |  - 9-Class Softmax Continuous Bar Chart|  - Dynamic Diagnostic Zones     |
 |                         |  - Confidence & Latency (<0.2ms)       |  - Scale Numbers & Color Legend |
 +----------------------------------------------------------------------------------------------------+
-|  FOOTER: Substation Digital Twin v2.0 • IEEE C57.104-2019 / IEC 60599 • 1D-CNN Diagnostic Engine  |
+|  FOOTER: GitHub Repository • anish609609/transformer_health_using_gas_sensors                      |
 +----------------------------------------------------------------------------------------------------+
 ```
 
@@ -65,7 +90,7 @@ flowchart TD
         P3["Channel-Wise Logarithmic Compression & Standardization"]
     end
 
-    subgraph Hybrid_AI["3. Hybrid Diagnostic Core (PyTorch / ONNX / TS Engine)"]
+    subgraph Hybrid_AI["3. Hybrid Diagnostic Core (Client-Side Edge Engine)"]
         subgraph AI_Branch["Deep Learning 1D-CNN Branch"]
             CNN["3-Layer 1D-CNN Temporal Feature Extractor"]
             CNN_OUT["Softmax Confidence Distribution (9 Fault Classes)"]
@@ -103,7 +128,7 @@ flowchart TD
 
 ---
 
-## 🧠 Deep Learning 1D-CNN: Complete Training & Modeling Guide
+## 🧠 Deep Learning 1D-CNN: Architecture & Modeling Guide
 
 Traditional DGA interpretation relies on static gas ratios that evaluate only an instantaneous snapshot in time. However, snapshots fail to distinguish between **historical accumulated inert gas** and an **active, rapidly evolving fault**, and they frequently generate false alarms during sensor drift.
 
@@ -133,9 +158,6 @@ $$X_c(t) = \max\left(0, \; B_c + \alpha_c \cdot G_c(t) + \epsilon_c(t)\right), \
 | `7` | `CELL` | Cellulose Paper Pyrolysis | Rapid $CO$ surge outpacing $CO_2$ generation | $CO > 600\text{ ppm}$, $CO_2/CO < 3.0$ (glucose cleavage) |
 | `8` | `SENS` | Sensor Drift / Glitch | Single-channel step jump in $H_2$ | Non-physical $H_2$ spike with $\Delta CH_4 \approx \Delta C_2H_6 \approx 0$ |
 
-#### Feature Normalization
-$$\tilde{X}_c(t) = \frac{\ln(1 + X_c(t)) - \mu_c}{\sigma_c + 10^{-6}}$$
-
 ---
 
 ### 2. 1D-CNN Network Topology (`model.py`)
@@ -151,7 +173,6 @@ $$\tilde{X}_c(t) = \frac{\ln(1 + X_c(t)) - \mu_c}{\sigma_c + 10^{-6}}$$
 | **Output Layer**| `Linear(64, 9)` + `Softmax` | $[B, 64]$ | $[B, 9]$ | Calibrated 9-class probability distribution |
 
 - **Validation Performance:** Achieves **$99.8\% - 100.0\%$ validation accuracy** across all 9 classes.
-- **Decoupled Architecture:** Inference is hosted on **Hugging Face Spaces** via a Gradio PyTorch API (`app.py`), with resilient zero-latency local fallback execution (<0.2ms) directly in the browser during cold-starts or network interruptions.
 
 ---
 
@@ -205,68 +226,43 @@ $$\text{Cellulose Ratio} = \frac{[CO_2]}{[CO]}$$
 
 ```text
 GAS_fault_detector/
-├── src/                          # React 18 + TypeScript Frontend (Deployed on Vercel)
+├── src/                          # React 18 + TypeScript Frontend
 │   ├── components/
 │   │   ├── TopExecutiveBar.tsx   # Header, 9-scenario pills, 24h playback, learning tabs & theme toggle
 │   │   ├── GasControlSliders.tsx # 7-gas injection sliders with IEEE limits & noise toggle
 │   │   ├── TelemetryChart24h.tsx # 24h multi-gas waveform trend (Linear / Log10 toggle & IEEE limits)
 │   │   ├── ActionDispatchCard.tsx# Isolated operational mitigations & field diagnostic work-orders
-│   │   ├── CnnConfidenceCard.tsx # 9-class Softmax probability distribution, Hugging Face Space status & inspector
+│   │   ├── CnnConfidenceCard.tsx # 9-class Softmax probability distribution & model inspector modal
 │   │   ├── DuvalTrianglePlot.tsx # Duval Triangle 1 ternary diagram with scale numbers & zone codes
 │   │   └── StandardsReferenceModal.tsx # Multi-tab DGA educational guide (IEEE C57.104 & IEC 60599/61850)
 │   ├── engine/
 │   │   ├── dgaStandards.ts       # IEEE C57.104, IEC 60599, TDCG & Duval Triangle math
-│   │   ├── cnnInference.ts       # Hugging Face Gradio Space API client with instant client fallback
+│   │   ├── cnnInference.ts       # Client-side 1D-CNN inference engine (<0.2ms latency)
 │   │   ├── actionProtocol.ts     # Operational mitigations & work-order arbitration
 │   │   └── scenarioPresets.ts    # 24-hour time-series sequences for all 9 fault scenarios
-│   ├── App.tsx                   # Main Substation Digital Twin 2x2 Grid Orchestrator
+│   ├── App.tsx                   # Main Substation Digital Twin 2x2 Grid Orchestrator & Footer
 │   ├── index.css                 # Tailwind CSS styles, CSS variables & dual-theme overrides
-│   ├── main.tsx                  # React DOM entry point
-│   └── vite-env.d.ts             # Vite client environment declarations (VITE_HF_API_URL)
-├── app.py                        # Hugging Face Spaces Gradio API backend with PyTorch 1D-CNN
+│   └── main.tsx                  # React DOM entry point
+├── models/
+│   └── dga_1dcnn.pth             # Trained PyTorch 1D-CNN weights checkpoint
+├── app.py                        # Optional Hugging Face Spaces Gradio app for remote API testing
 ├── model.py                      # PyTorch 1D-CNN architecture & training script
 ├── generate_data.py              # Physics-informed 24h 7-gas synthetic data generator
-├── dga_1dcnn.pth                 # Trained PyTorch 1D-CNN weights (loaded by Hugging Face Space)
-├── requirements.txt              # Hugging Face Space dependencies (gradio, torch, numpy)
-├── vercel.json                   # Vercel SPA deployment configuration
-├── .vercelignore                 # Excludes heavy ML binaries & python scripts from Vercel bundle
 ├── package.json                  # React + Vite + Tailwind dependencies
+├── requirements.txt              # Python ML training dependencies
 └── README.md                     # Comprehensive Substation & AI Documentation
 ```
 
 ---
 
-## 🚀 Deployment & Local Execution
+## 🚀 Getting Started & Local Execution
 
-### 1. Hugging Face Spaces (ML Backend Deployment)
-The machine learning inference backend runs as a dedicated Hugging Face Space with Gradio and PyTorch:
-1. Create a new **Gradio Space** on [Hugging Face Spaces](https://huggingface.co/spaces).
-2. Push or upload:
-   - `app.py`
-   - `model.py`
-   - `dga_1dcnn.pth`
-   - `requirements.txt`
-3. The Space will automatically build and expose:
-   - Interactive Gradio UI: `https://<your-space-name>.hf.space`
-   - REST API endpoint: `POST https://<your-space-name>.hf.space/predict`
-   - Gradio client endpoint: `POST https://<your-space-name>.hf.space/api/predict`
-
-To test locally:
+### 1. Run the Frontend Locally
 ```bash
-pip install -r requirements.txt
-python app.py
-# Running on http://127.0.0.1:7860
-```
+# Clone the repository
+git clone https://github.com/anish609609/transformer_health_using_gas_sensors.git
+cd transformer_health_using_gas_sensors
 
-### 2. Vercel Frontend Deployment
-The frontend is optimized for zero-overhead static hosting on **Vercel**:
-1. Connect your repository to **Vercel**.
-2. Set the environment variable in Vercel project settings:
-   - `VITE_HF_API_URL`: `https://<your-space-name>.hf.space`
-3. Deploy! Vercel automatically applies `.vercelignore` to exclude python scripts, weights, and caches, producing a lightweight bundle under **700 kB**.
-
-### 3. Run Frontend Locally
-```bash
 # Install dependencies
 npm install
 
@@ -275,6 +271,14 @@ npm run dev
 
 # Run production build
 npm run build
+```
+
+### 2. Retrain the PyTorch 1D-CNN Model (Optional)
+```bash
+pip install -r requirements.txt
+
+# Train PyTorch 1D-CNN (~5s on CPU) and save weights to models/dga_1dcnn.pth
+python model.py
 ```
 
 ---
