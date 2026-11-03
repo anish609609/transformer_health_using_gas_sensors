@@ -69,7 +69,7 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
 
       {isSimulatingFault && (
         <div className="px-3 py-2 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-400 shrink-0 animate-spin" />
+          <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
           <span>Preset scenario active. Modifying sliders overrides telemetry with custom injection.</span>
         </div>
       )}
@@ -92,7 +92,7 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
               key={gasKey}
               className={`p-2.5 rounded-lg border transition-all ${
                 isCriticalC2H2
-                  ? 'bg-rose-950/20 border-rose-500/50 shadow-[0_0_12px_rgba(225,29,72,0.15)]'
+                  ? 'bg-rose-950/20 border-rose-500/50'
                   : isBreached
                   ? 'bg-amber-950/15 border-amber-500/40'
                   : 'bg-slate-900/60 border-slate-800/80 hover:border-slate-700'

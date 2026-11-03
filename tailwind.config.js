@@ -22,16 +22,6 @@ export default {
           muted: '#94a3b8',     // slate-400
         }
       },
-      animation: {
-        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'glow-pulse': 'glow 2s ease-in-out infinite',
-      },
-      keyframes: {
-        glow: {
-          '0%, 100%': { opacity: 0.8, filter: 'drop-shadow(0 0 8px rgba(6, 182, 212, 0.6))' },
-          '50%': { opacity: 1, filter: 'drop-shadow(0 0 16px rgba(6, 182, 212, 0.9))' },
-        }
-      }
     },
   },
   plugins: [],

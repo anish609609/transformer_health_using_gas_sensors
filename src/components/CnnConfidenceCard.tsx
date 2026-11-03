@@ -37,7 +37,7 @@ export const CnnConfidenceCard: React.FC<CnnConfidenceCardProps> = ({
           <div>
             <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wider flex items-center gap-1.5">
               <span>Top Classification</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
             </div>
             <div className="text-sm sm:text-base font-bold text-white font-mono flex items-center gap-2 mt-0.5">
               <span className="text-cyan-400">[{inference.classCode}]</span>

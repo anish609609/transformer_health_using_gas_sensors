@@ -288,10 +288,9 @@ Or push this repository to GitHub/GitLab and import directly into [Vercel](https
 GAS_fault_detector/
 ├── src/                          # React 18 + TypeScript Frontend
 │   ├── components/
-│   │   ├── TopExecutiveBar.tsx   # Asset health KPIs, ROI ticker & 9-Scenario Tour bar
+│   │   ├── TopExecutiveBar.tsx   # Asset header, status badges & 9-Scenario Tour bar
 │   │   ├── GasControlSliders.tsx # Interactive 7-gas injection sliders & noise generator
-│   │   ├── TransformerTwinSVG.tsx# Interactive 2D Transformer cutaway fault visualizer
-│   │   ├── DuvalTrianglePlot.tsx # Custom SVG/Plotly Duval Triangle 1 ternary diagram
+│   │   ├── DuvalTrianglePlot.tsx # Clean, simple Duval Triangle 1 ternary diagram
 │   │   ├── TelemetryChart24h.tsx # 24h multi-gas time-series chart (Linear / Log10 toggle)
 │   │   ├── CnnConfidenceCard.tsx # 9-class Softmax probability chart & CNN inspector modal
 │   │   └── ActionDispatchCard.tsx# Automated IEC 61850 SCADA & field work-order panel
