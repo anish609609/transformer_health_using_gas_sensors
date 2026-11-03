@@ -53,7 +53,7 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
   const gridPercentages = [20, 40, 60, 80];
 
   return (
-    <div className="bg-scada-card border border-scada-border rounded-xl p-3.5 flex flex-col gap-2.5 shadow-lg">
+    <div className="bg-scada-card border border-scada-border rounded-xl p-3.5 flex flex-col justify-between shadow-lg h-full">
       {/* Header with Integrated Compact Axis Colors & Zone Badge */}
       <div className="flex items-center justify-between pb-2 border-b border-slate-800">
         <div className="flex items-center gap-2">

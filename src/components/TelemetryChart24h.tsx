@@ -84,7 +84,7 @@ export const TelemetryChart24h: React.FC<TelemetryChart24hProps> = ({
   };
 
   return (
-    <div className="bg-scada-card border border-scada-border rounded-xl p-3.5 flex flex-col gap-2.5 shadow-lg">
+    <div className="bg-scada-card border border-scada-border rounded-xl p-3.5 flex flex-col justify-between shadow-lg h-full">
       {/* Header & Scale Toggles */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800">
         <div className="flex items-center gap-2">

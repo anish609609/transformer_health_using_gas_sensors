@@ -191,34 +191,44 @@ export const App: React.FC = () => {
           isSimulatingFault={!isCustomMode && currentScenario !== 'normal'}
         />
 
-        {/* User-Centric Main Workspace Flow:
-            1. Concentration Waveform Graph
-            2. Streamlined Interactive Action & Dispatch Toolbar (just below gas chart)
-            3. Consolidated 1D-CNN & Duval Triangle Diagnostic Grid */}
-        <main className="flex-1 p-3 flex flex-col gap-2.5 overflow-y-auto max-w-[1920px]">
-          {/* 1. First: 24-Hour Concentration Telemetry Waveform Graph */}
-          <TelemetryChart24h
-            telemetryData={fullSequence.slice(0, playbackHour + 1)}
-          />
+        {/* User-Centric 2x2 Dashboard Grid beside Sidebar */}
+        <main className="flex-1 p-3 flex flex-col gap-2 overflow-y-auto max-w-[1920px]">
+          {/* 2x2 Matrix:
+              [1, 1] Gas Charts                | [1, 2] AI Engine Suggested Actions
+              [2, 1] 1D-CNN Probability Chart  | [2, 2] Duval Triangle 1 */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5 items-stretch">
+            {/* Cell (1, 1): 24-Hour Multi-Gas Telemetry Chart */}
+            <div className="flex flex-col min-h-0">
+              <TelemetryChart24h
+                telemetryData={fullSequence.slice(0, playbackHour + 1)}
+              />
+            </div>
 
-          {/* 2. Second: Streamlined Substation Action & Dispatch Toolbar */}
-          <ActionDispatchCard
-            actionProtocol={actionProtocol}
-            ieeeStatus={ieeeStatus}
-            duvalCoords={duvalCoords}
-            celluloseStatus={celluloseResult.status}
-            celluloseRisk={celluloseResult.risk}
-            celluloseRatio={celluloseResult.ratio}
-          />
+            {/* Cell (1, 2): Actions to be Taken Suggested by AI Engine */}
+            <div className="flex flex-col min-h-0">
+              <ActionDispatchCard
+                actionProtocol={actionProtocol}
+                ieeeStatus={ieeeStatus}
+                duvalCoords={duvalCoords}
+                celluloseStatus={celluloseResult.status}
+                celluloseRisk={celluloseResult.risk}
+                celluloseRatio={celluloseResult.ratio}
+              />
+            </div>
 
-          {/* 3. Third: Consolidated 1D-CNN Probability Distribution & Duval Triangle 1 */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
-            <CnnConfidenceCard inference={cnnInference} />
-            <DuvalTrianglePlot currentDuval={duvalCoords} />
+            {/* Cell (2, 1): 1D-CNN Deep Learning Probability Chart */}
+            <div className="flex flex-col min-h-0">
+              <CnnConfidenceCard inference={cnnInference} />
+            </div>
+
+            {/* Cell (2, 2): Duval Triangle 1 Diagnostics */}
+            <div className="flex flex-col min-h-0">
+              <DuvalTrianglePlot currentDuval={duvalCoords} />
+            </div>
           </div>
 
           {/* Substation Footer */}
-          <footer className="text-center text-[11px] font-mono text-slate-500 py-1.5 border-t border-slate-900 mt-1 flex flex-col sm:flex-row items-center justify-center">
+          <footer className="text-center text-[11px] font-mono text-slate-500 py-1 border-t border-slate-900 mt-0.5 flex flex-col sm:flex-row items-center justify-center">
             <div>
               ⚡ <strong>Substation Digital Twin v2.0</strong> &bull; IEEE C57.104-2019 / IEC 60599 &bull; 1D-CNN Diagnostic Engine
             </div>

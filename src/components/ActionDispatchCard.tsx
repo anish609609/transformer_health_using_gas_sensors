@@ -1,14 +1,5 @@
-import React, { useState } from 'react';
-import { 
-  ShieldAlert, 
-  Terminal, 
-  Wrench, 
-  Zap, 
-  Download, 
-  CheckCircle2, 
-  Activity,
-  Check
-} from 'lucide-react';
+import React from 'react';
+import { Terminal, Wrench, AlertTriangle, Cpu } from 'lucide-react';
 import { ActionProtocol } from '../engine/actionProtocol';
 import { IEEEValidationResult, DuvalCoordinates } from '../engine/dgaStandards';
 
@@ -28,188 +19,97 @@ export const ActionDispatchCard: React.FC<ActionDispatchCardProps> = ({
   celluloseRisk,
   celluloseRatio,
 }) => {
-  // Interactive action states
-  const [loadShedActive, setLoadShedActive] = useState(false);
-  const [crewDispatched, setCrewDispatched] = useState(false);
-  const [scadaInterlockArmed, setScadaInterlockArmed] = useState(false);
-  const [sfraOrdered, setSfraOrdered] = useState(false);
-  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
-
-  const triggerFeedback = (msg: string) => {
-    setActionFeedback(msg);
-    setTimeout(() => {
-      setActionFeedback((prev) => (prev === msg ? null : prev));
-    }, 3500);
-  };
-
-  const handleToggleLoadShed = () => {
-    const next = !loadShedActive;
-    setLoadShedActive(next);
-    triggerFeedback(next ? '⚡ IEC 61850: 40% Load Curtailment Dispatched to Bay #04' : 'Load Curtailment Normalized');
-  };
-
-  const handleToggleCrew = () => {
-    const next = !crewDispatched;
-    setCrewDispatched(next);
-    triggerFeedback(next ? '👷 Rapid Response Substation Crew Dispatched to Bay #04' : 'Crew Dispatch Standby');
-  };
-
-  const handleToggleInterlock = () => {
-    const next = !scadaInterlockArmed;
-    setScadaInterlockArmed(next);
-    triggerFeedback(next ? '🔒 SCADA GGIO.TripInterlock Armed & Locked' : 'SCADA Interlock Disarmed');
-  };
-
-  const handleToggleSFRA = () => {
-    const next = !sfraOrdered;
-    setSfraOrdered(next);
-    triggerFeedback(next ? '📋 Work-Order WO-TX400-882 (SFRA / HPLC) Logged to SAP PM' : 'Work-Order Cancelled');
-  };
-
-  const handleExportSample = () => {
-    // Generate simulated laboratory GC oil sample CSV
-    const csvContent = `data:text/csv;charset=utf-8,Timestamp,Transformer,IEEE_Condition,Duval_Zone,Cellulose_Ratio\n${new Date().toISOString()},TX-400kV-BAY-04,${ieeeStatus.condition},${duvalCoords.zoneCode},${celluloseRatio.toFixed(2)}`;
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `DGA_Sample_Bay04_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    triggerFeedback('📥 Lab GC Sample Telemetry Exported (CSV)');
-  };
-
-  // Primary directive text derived from protocol
-  const primaryDirective = actionProtocol.operationalActions[0] || 'Nominal Substation Baseline Monitoring';
-
   return (
-    <div className="bg-scada-card border border-scada-border rounded-xl p-3 shadow-lg flex flex-col gap-2.5">
-      {/* Main Single-Row Industrial Dispatch Toolbar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        
-        {/* Left: Severity Badge & Primary Directive */}
-        <div className="flex items-center gap-2.5 min-w-0">
-          {/* Severity Icon Badge */}
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border"
+    <div className="bg-scada-card border border-scada-border rounded-xl p-3.5 flex flex-col justify-between shadow-lg h-full">
+      {/* 1. Header with Diagnostic Priority & Subsystem Badge */}
+      <div>
+        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div className="flex items-center gap-2">
+            <Cpu className="w-4 h-4 text-cyan-400" />
+            <h3 className="text-xs font-mono font-bold tracking-wider uppercase text-slate-200">
+              AI Engine &bull; Suggested Actions &amp; Mitigation
+            </h3>
+          </div>
+
+          <span
+            className="text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase tracking-wider border shrink-0"
             style={{
-              backgroundColor: `${actionProtocol.color}15`,
-              borderColor: `${actionProtocol.color}40`,
+              backgroundColor: `${actionProtocol.color}20`,
               color: actionProtocol.color,
+              borderColor: `${actionProtocol.color}50`,
             }}
           >
-            <ShieldAlert className="w-4 h-4" />
-          </div>
-
-          {/* Directive Text & Badges */}
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className="text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase tracking-wider border shrink-0"
-                style={{
-                  backgroundColor: `${actionProtocol.color}20`,
-                  color: actionProtocol.color,
-                  borderColor: `${actionProtocol.color}50`,
-                }}
-              >
-                {actionProtocol.severity.split(' ')[0]}
-              </span>
-
-              <span className="text-xs sm:text-sm font-bold text-white truncate font-sans">
-                {primaryDirective}
-              </span>
-            </div>
-
-            {/* Quick Status Chips */}
-            <div className="flex items-center gap-1.5 mt-1 text-[10px] font-mono text-slate-400 flex-wrap">
-              <span className="px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-300">
-                IEEE: <strong className="text-white">{ieeeStatus.condition.split(' ')[1]}</strong>
-              </span>
-              <span className="px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-300">
-                Duval: <strong className="text-cyan-300">{duvalCoords.zoneCode}</strong>
-              </span>
-              <span className="px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-300">
-                CO₂/CO: <strong className={celluloseRisk === 'High' ? 'text-rose-400' : 'text-slate-300'}>{celluloseRatio.toFixed(1)}</strong>
-              </span>
-            </div>
-          </div>
+            {actionProtocol.severity.split(' ')[0]}
+          </span>
         </div>
 
-        {/* Right: Interactive Action & Dispatch Buttons */}
-        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-          {/* Primary Action Button (Load Curtailment / Emergency Isolation) */}
-          <button
-            onClick={handleToggleLoadShed}
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-sm ${
-              loadShedActive
-                ? 'bg-rose-500 text-white border border-rose-400'
-                : actionProtocol.severity.includes('CRITICAL') || actionProtocol.severity.includes('WARNING')
-                ? 'bg-rose-600/80 hover:bg-rose-500 text-white border border-rose-500/80'
-                : 'bg-cyan-600/80 hover:bg-cyan-500 text-white border border-cyan-500/80'
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5 fill-current" />
-            <span>{loadShedActive ? 'Load Shedding Active (40%)' : 'Initiate Load Shedding'}</span>
-          </button>
-
-          {/* Dispatch Crew Button */}
-          <button
-            onClick={handleToggleCrew}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-mono transition flex items-center gap-1.5 border ${
-              crewDispatched
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold'
-                : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
-            }`}
-          >
-            {crewDispatched ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Wrench className="w-3.5 h-3.5 text-amber-400" />}
-            <span>{crewDispatched ? 'Crew Dispatched' : 'Dispatch Crew'}</span>
-          </button>
-
-          {/* Trigger SCADA Interlock */}
-          <button
-            onClick={handleToggleInterlock}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-mono transition flex items-center gap-1.5 border ${
-              scadaInterlockArmed
-                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 font-bold'
-                : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
-            }`}
-          >
-            {scadaInterlockArmed ? <Check className="w-3.5 h-3.5 text-cyan-400" /> : <Terminal className="w-3.5 h-3.5 text-cyan-400" />}
-            <span>{scadaInterlockArmed ? 'Interlock Armed' : 'SCADA Interlock'}</span>
-          </button>
-
-          {/* Order SFRA / HPLC */}
-          <button
-            onClick={handleToggleSFRA}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-mono transition flex items-center gap-1.5 border ${
-              sfraOrdered
-                ? 'bg-purple-500/20 text-purple-300 border-purple-500/50 font-bold'
-                : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
-            }`}
-          >
-            {sfraOrdered ? <Check className="w-3.5 h-3.5 text-purple-400" /> : <Activity className="w-3.5 h-3.5 text-purple-400" />}
-            <span>{sfraOrdered ? 'WO Created' : 'SFRA Test'}</span>
-          </button>
-
-          {/* Export Lab Sample CSV */}
-          <button
-            onClick={handleExportSample}
-            className="px-2.5 py-1.5 rounded-lg text-xs font-mono transition bg-slate-900 text-slate-300 border border-slate-800 hover:border-slate-700 hover:text-cyan-300 flex items-center gap-1.5"
-            title="Download Gas Concentration Sample for Oil Lab Validation (CSV)"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-400" />
-            <span>Export GC</span>
-          </button>
+        {/* Affected Subsystem Identifier */}
+        <div className="mt-2 px-2.5 py-1 rounded bg-slate-900/90 border border-slate-800 text-[11px] font-mono flex items-center justify-between">
+          <span className="text-slate-400">Target Subsystem:</span>
+          <span className="font-bold text-white truncate ml-2">
+            {actionProtocol.subsystemLabel}
+          </span>
         </div>
       </div>
 
-      {/* Tactile Action Feedback Banner (Only visible when user clicks an action) */}
-      {actionFeedback && (
-        <div className="px-2.5 py-1 rounded bg-cyan-950/40 border border-cyan-500/40 text-cyan-300 text-[11px] font-mono flex items-center gap-2">
-          <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-          <span>{actionFeedback}</span>
+      {/* 2. Primary Operational Directives Suggested by AI */}
+      <div className="my-2 bg-slate-900/70 border border-slate-800/80 rounded-lg p-2.5">
+        <div className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+          <AlertTriangle className="w-3 h-3 text-amber-400 shrink-0" />
+          <span>Immediate AI Operational Mitigation Commands:</span>
         </div>
-      )}
+
+        <ul className="space-y-1 text-xs text-slate-200 font-sans">
+          {actionProtocol.operationalActions.slice(0, 2).map((action, idx) => (
+            <li key={idx} className="flex items-start gap-1.5 leading-snug">
+              <span className="text-cyan-400 font-mono font-bold shrink-0">{idx + 1}.</span>
+              <span className="text-[11.5px] text-slate-200">{action}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* 3. 2-Column Split: SCADA Automated Interlocks & Field Testing Orders */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
+        {/* Left: IEC 61850 SCADA Interlocks */}
+        <div className="bg-slate-900/80 border border-slate-800/80 rounded-lg p-2 flex flex-col justify-between">
+          <div className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <Terminal className="w-3 h-3 shrink-0" />
+            <span>SCADA Interlocks</span>
+          </div>
+          <ul className="space-y-1 text-[10.5px] text-slate-300">
+            {actionProtocol.scadaCommands.slice(0, 2).map((cmd, idx) => (
+              <li key={idx} className="flex items-center gap-1.5 truncate text-slate-300" title={cmd}>
+                <span className="w-1 h-1 rounded-full bg-cyan-400 shrink-0" />
+                <span className="truncate">{cmd.replace('SCADA command: ', '').replace('Substation command: ', '')}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Right: Field Testing & Maintenance Orders */}
+        <div className="bg-slate-900/80 border border-slate-800/80 rounded-lg p-2 flex flex-col justify-between">
+          <div className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <Wrench className="w-3 h-3 shrink-0" />
+            <span>Field Work-Orders</span>
+          </div>
+          <ul className="space-y-1 text-[10.5px] text-slate-300">
+            {actionProtocol.fieldTesting.slice(0, 2).map((test, idx) => (
+              <li key={idx} className="flex items-center gap-1.5 truncate text-slate-300" title={test}>
+                <span className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />
+                <span className="truncate">{test}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* 4. Regulatory Status Footer Bar */}
+      <div className="mt-2 pt-2 border-t border-slate-800/90 flex items-center justify-between text-[10px] font-mono text-slate-400 flex-wrap gap-1">
+        <span>IEEE C57.104: <strong className="text-white">{ieeeStatus.condition}</strong></span>
+        <span>Duval: <strong className="text-cyan-300">{duvalCoords.zoneCode}</strong></span>
+        <span>Paper Health: <strong className={celluloseRisk === 'High' ? 'text-rose-400' : 'text-slate-200'}>Ratio {celluloseRatio.toFixed(1)} ({celluloseRisk})</strong></span>
+      </div>
     </div>
   );
 };

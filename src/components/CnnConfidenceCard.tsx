@@ -13,51 +13,53 @@ export const CnnConfidenceCard: React.FC<CnnConfidenceCardProps> = ({
 
   return (
     <>
-      <div className="bg-scada-card border border-scada-border rounded-xl p-3.5 flex flex-col gap-2.5 shadow-lg">
+      <div className="bg-scada-card border border-scada-border rounded-xl p-3.5 flex flex-col justify-between shadow-lg h-full">
         {/* Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-          <div className="flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-xs font-mono font-bold tracking-wider uppercase text-slate-200">
-              1D-CNN AI Diagnostics &bull; 9-Class Softmax
-            </h3>
+        <div>
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div className="flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-cyan-400" />
+              <h3 className="text-xs font-mono font-bold tracking-wider uppercase text-slate-200">
+                1D-CNN AI Diagnostics &bull; 9-Class Probability
+              </h3>
+            </div>
+
+            <button
+              onClick={() => setShowInspectorModal(true)}
+              className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-cyan-400 hover:text-cyan-300 hover:border-slate-700 transition flex items-center gap-1"
+            >
+              <Info className="w-3 h-3" />
+              Inspect CNN
+            </button>
           </div>
 
-          <button
-            onClick={() => setShowInspectorModal(true)}
-            className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-cyan-400 hover:text-cyan-300 hover:border-slate-700 transition flex items-center gap-1"
-          >
-            <Info className="w-3 h-3" />
-            Inspect Architecture
-          </button>
-        </div>
-
-        {/* Consolidated Top Prediction Row */}
-        <div className="bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-cyan-950/30 border border-slate-800 rounded-lg px-3 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0">
-              {inference.classCode}
-            </span>
-            <span className="text-xs sm:text-sm font-bold text-white truncate font-sans">
-              {inference.className}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0 font-mono">
-            <div className="text-right">
-              <span className="text-[10px] text-slate-400 block leading-tight">Confidence</span>
-              <span className="text-sm sm:text-base font-bold text-emerald-400 leading-tight">
-                {inference.confidence.toFixed(1)}%
+          {/* Consolidated Top Classification Row */}
+          <div className="mt-2 bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-cyan-950/30 border border-slate-800 rounded-lg px-3 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0">
+                {inference.classCode}
+              </span>
+              <span className="text-xs sm:text-sm font-bold text-white truncate font-sans">
+                {inference.className}
               </span>
             </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">
-              {inference.executionTimeMs}ms
-            </span>
+
+            <div className="flex items-center gap-2.5 shrink-0 font-mono">
+              <div className="text-right">
+                <span className="text-[10px] text-slate-400 block leading-tight">Confidence</span>
+                <span className="text-sm sm:text-base font-bold text-emerald-400 leading-tight">
+                  {inference.confidence.toFixed(1)}%
+                </span>
+              </div>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">
+                {inference.executionTimeMs}ms
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Streamlined 2-Column 9-Class Probability Bar Grid */}
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 pt-0.5">
+        {/* 9-Class Probability Bar Distribution (Clean 2-Column Compact Grid) */}
+        <div className="my-2 grid grid-cols-2 gap-x-3 gap-y-1.5">
           {inference.probabilities.map((item: CnnClassProbability) => (
             <div key={item.id} className="flex items-center gap-1.5 text-[11px] font-mono">
               <span className={`w-9 shrink-0 font-bold ${item.isTop ? 'text-white' : 'text-slate-400'}`}>
@@ -76,11 +78,17 @@ export const CnnConfidenceCard: React.FC<CnnConfidenceCardProps> = ({
                 />
               </div>
 
-              <span className={`w-10 text-right shrink-0 text-[10px] font-bold ${item.isTop ? 'text-cyan-300' : 'text-slate-500'}`}>
+              <span className={`w-9 text-right shrink-0 text-[10px] font-bold ${item.isTop ? 'text-cyan-300' : 'text-slate-500'}`}>
                 {item.probability.toFixed(0)}%
               </span>
             </div>
           ))}
+        </div>
+
+        {/* Footer Note */}
+        <div className="pt-2 border-t border-slate-800/90 flex items-center justify-between text-[10px] font-mono text-slate-500">
+          <span>Inference: PyTorch Conv1D Engine</span>
+          <span>Zero-Latency Client-Side</span>
         </div>
       </div>
 
