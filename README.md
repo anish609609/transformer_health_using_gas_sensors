@@ -134,7 +134,7 @@ Traditional DGA interpretation relies on static gas ratios that evaluate only an
 
 Our **1D Convolutional Neural Network (1D-CNN)** solves this by analyzing the entire **7-channel temporal waveform** over a 24-hour rolling window.
 
-### 1. Synthetic Telemetry Generation Pipeline (`generate_data.py`)
+### 1. Synthetic Telemetry Generation Pipeline (`backend/generate_data.py`)
 
 The model is trained on a physics-informed dataset modeled after IEEE C57.104-2019 and IEC 60599 thermodynamic fault growth signatures:
 
@@ -160,7 +160,7 @@ $$X_c(t) = \max\left(0, \; B_c + \alpha_c \cdot G_c(t) + \epsilon_c(t)\right), \
 
 ---
 
-### 2. 1D-CNN Network Topology (`model.py`)
+### 2. 1D-CNN Network Topology (`backend/model.py`)
 
 | Layer | Operation & Hyperparameters | Input Shape | Output Shape | Feature Role |
 |---|---|---|---|---|
@@ -226,38 +226,49 @@ $$\text{Cellulose Ratio} = \frac{[CO_2]}{[CO]}$$
 
 ```text
 GAS_fault_detector/
-├── src/                          # React 18 + TypeScript Frontend
-│   ├── components/
-│   │   ├── TopExecutiveBar.tsx   # Header, 9-scenario pills, 24h playback, learning tabs & theme toggle
+├── backend/                      # Python AI/ML Pipeline, Standards & Diagnostics Backend
+│   ├── app.py                    # Interactive Gradio GUI & FastAPI inference endpoint
+│   ├── demo_all_possibilities.py # Comprehensive 9-scenario verification test runner
+│   ├── model.py                  # PyTorch 1D-CNN neural network architecture & training loop
+│   ├── generate_data.py          # Physics-informed 24h 7-gas synthetic data generator
+│   ├── validator.py              # IEEE C57.104-2019 & Duval Triangle 1 standards validator
+│   ├── action_engine.py          # Substation mitigation & work-order arbitration engine
+│   ├── export_onnx.py            # Model export pipeline (ONNX / Web JSON)
+│   ├── requirements.txt          # Python ML & server dependencies
+│   ├── api/
+│   │   └── diagnose.py           # Standalone lightweight HTTP diagnostic handler
+│   ├── __init__.py               # Python package exports
+│   └── README.md                 # Dedicated backend documentation & usage
+├── models/                       # Machine Learning Model Weight Checkpoints
+│   ├── dga_1dcnn.pth             # Trained PyTorch 1D-CNN checkpoint (9 Fault Classes)
+│   └── dga_1dcnn.onnx            # Standardized ONNX inference binary
+├── src/                          # React 18 + TypeScript Frontend (Client-Side Twin)
+│   ├── components/               # Zero-Scroll 2x2 Dashboard & Card Components
+│   │   ├── TopExecutiveBar.tsx   # Header, 9-scenario pills, 24h playback & theme toggle
 │   │   ├── GasControlSliders.tsx # 7-gas injection sliders with IEEE limits & noise toggle
-│   │   ├── TelemetryChart24h.tsx # 24h multi-gas waveform trend (Linear / Log10 toggle & IEEE limits)
-│   │   ├── ActionDispatchCard.tsx# Isolated operational mitigations & field diagnostic work-orders
-│   │   ├── CnnConfidenceCard.tsx # 9-class Softmax probability distribution & model inspector modal
-│   │   ├── DuvalTrianglePlot.tsx # Duval Triangle 1 ternary diagram with scale numbers & zone codes
-│   │   └── StandardsReferenceModal.tsx # Multi-tab DGA educational guide (IEEE C57.104 & IEC 60599/61850)
-│   ├── engine/
+│   │   ├── TelemetryChart24h.tsx # 24h multi-gas waveform trend (Linear / Log10 toggle)
+│   │   ├── ActionDispatchCard.tsx# Isolated operational mitigations & work-orders
+│   │   ├── CnnConfidenceCard.tsx # 9-class Softmax probability distribution & model inspector
+│   │   ├── DuvalTrianglePlot.tsx # Duval Triangle 1 ternary diagram with zone geometry
+│   │   └── StandardsReferenceModal.tsx # Multi-tab DGA regulatory & IEC 61850 guide
+│   ├── engine/                   # Client-Side Compute Engines (<0.2ms latency)
 │   │   ├── dgaStandards.ts       # IEEE C57.104, IEC 60599, TDCG & Duval Triangle math
-│   │   ├── cnnInference.ts       # Client-side 1D-CNN inference engine (<0.2ms latency)
+│   │   ├── cnnInference.ts       # In-browser 1D-CNN forward pass (<0.2ms)
 │   │   ├── actionProtocol.ts     # Operational mitigations & work-order arbitration
 │   │   └── scenarioPresets.ts    # 24-hour time-series sequences for all 9 fault scenarios
 │   ├── App.tsx                   # Main Substation Digital Twin 2x2 Grid Orchestrator & Footer
-│   ├── index.css                 # Tailwind CSS styles, CSS variables & dual-theme overrides
+│   ├── index.css                 # Tailwind CSS styles & dual-theme variables
 │   └── main.tsx                  # React DOM entry point
-├── models/
-│   └── dga_1dcnn.pth             # Trained PyTorch 1D-CNN weights checkpoint
-├── app.py                        # Optional Hugging Face Spaces Gradio app for remote API testing
-├── model.py                      # PyTorch 1D-CNN architecture & training script
-├── generate_data.py              # Physics-informed 24h 7-gas synthetic data generator
-├── package.json                  # React + Vite + Tailwind dependencies
-├── requirements.txt              # Python ML training dependencies
-└── README.md                     # Comprehensive Substation & AI Documentation
+├── package.json                  # Frontend dependencies & quick npm execution scripts
+├── requirements.txt              # Root Python dependencies reference
+└── README.md                     # Platform Documentation
 ```
 
 ---
 
 ## 🚀 Getting Started & Local Execution
 
-### 1. Run the Frontend Locally
+### 1. Run the Frontend Digital Twin (React + Vite)
 ```bash
 # Clone the repository
 git clone https://github.com/anish609609/transformer_health_using_gas_sensors.git
@@ -273,12 +284,31 @@ npm run dev
 npm run build
 ```
 
-### 2. Retrain the PyTorch 1D-CNN Model (Optional)
+### 2. Run Comprehensive 9-Scenario Verification Demo
+Verifies the 1D-CNN model and standards engine across all 9 fault scenarios:
 ```bash
+python backend/demo_all_possibilities.py
+# Or via npm shortcut:
+npm run demo
+```
+
+### 3. Launch the Interactive Gradio Diagnostic GUI
+Starts the Python Gradio dashboard and REST inference endpoint:
+```bash
+python backend/app.py
+# Or via npm shortcut:
+npm run backend
+```
+
+### 4. Retrain the PyTorch 1D-CNN Model (Optional)
+```bash
+# Install Python dependencies
 pip install -r requirements.txt
 
 # Train PyTorch 1D-CNN (~5s on CPU) and save weights to models/dga_1dcnn.pth
-python model.py
+python backend/model.py
+# Or via npm shortcut:
+npm run train
 ```
 
 ---

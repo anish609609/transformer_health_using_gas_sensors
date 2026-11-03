@@ -6,13 +6,30 @@ Executes comprehensive real-time inference and standards validation across
 all 9 operational and fault scenarios for gas-monitored substation assets.
 """
 
+import os
+import sys
 import numpy as np
 import torch
 import pandas as pd
-from generate_data import generate_sequence, SCENARIOS, GAS_NAMES
-from model import DGA1DCNN
-from validator import StandardsValidator
-from action_engine import ActionEngine
+
+# Ensure backend directory and project root are accessible
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(CURRENT_DIR)
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
+if ROOT_DIR not in sys.path:
+    sys.path.append(ROOT_DIR)
+
+try:
+    from backend.generate_data import generate_sequence, SCENARIOS, GAS_NAMES
+    from backend.model import DGA1DCNN
+    from backend.validator import StandardsValidator
+    from backend.action_engine import ActionEngine
+except ImportError:
+    from generate_data import generate_sequence, SCENARIOS, GAS_NAMES
+    from model import DGA1DCNN
+    from validator import StandardsValidator
+    from action_engine import ActionEngine
 
 def run_demo():
     print("=" * 105)
@@ -21,18 +38,28 @@ def run_demo():
     print("  Standards: IEEE C57.104-2019 | IEC 60599 | Duval Triangle 1")
     print("=" * 105)
     
+    # Locate model weights
+    candidates = [
+        os.path.join(ROOT_DIR, "models", "dga_1dcnn.pth"),
+        os.path.join(CURRENT_DIR, "models", "dga_1dcnn.pth"),
+        os.path.join("models", "dga_1dcnn.pth"),
+        os.path.join("..", "models", "dga_1dcnn.pth"),
+        os.environ.get("MODEL_PATH", "")
+    ]
+    model_path = next((c for c in candidates if c and os.path.exists(c)), "models/dga_1dcnn.pth")
+
     # Load model
     model = DGA1DCNN(num_classes=len(SCENARIOS))
     try:
-        checkpoint = torch.load("models/dga_1dcnn.pth", map_location="cpu")
+        checkpoint = torch.load(model_path, map_location="cpu")
         if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
             model.load_state_dict(checkpoint["model_state_dict"])
         else:
             model.load_state_dict(checkpoint)
         model.eval()
-        print(">> 1D-CNN Model weights loaded successfully (9 Fault Classes).")
+        print(f">> 1D-CNN Model weights loaded successfully from: {model_path} (9 Fault Classes).")
     except Exception as e:
-        print(f"Error loading model: {e}")
+        print(f"Error loading model from {model_path}: {e}")
         return
 
     validator = StandardsValidator()

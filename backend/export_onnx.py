@@ -1,16 +1,46 @@
 import os
+import sys
 import json
 import torch
 import numpy as np
-from model import DGA1DCNN
+
+if sys.platform.startswith("win"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(CURRENT_DIR)
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
+if ROOT_DIR not in sys.path:
+    sys.path.append(ROOT_DIR)
+
+try:
+    from backend.model import DGA1DCNN
+except ImportError:
+    from model import DGA1DCNN
 
 def export():
     os.environ["PYTHONIOENCODING"] = "utf-8"
-    os.makedirs("models", exist_ok=True)
-    os.makedirs("public/models", exist_ok=True)
-    os.makedirs("src/engine", exist_ok=True)
+    models_dir = os.path.join(ROOT_DIR, "models")
+    public_models_dir = os.path.join(ROOT_DIR, "public", "models")
+    engine_dir = os.path.join(ROOT_DIR, "src", "engine")
+    os.makedirs(models_dir, exist_ok=True)
+    os.makedirs(public_models_dir, exist_ok=True)
+    os.makedirs(engine_dir, exist_ok=True)
     
-    ckpt_path = "models/dga_1dcnn.pth"
+    candidates = [
+        os.path.join(ROOT_DIR, "models", "dga_1dcnn.pth"),
+        os.path.join(CURRENT_DIR, "models", "dga_1dcnn.pth"),
+        os.path.join("models", "dga_1dcnn.pth"),
+        os.path.join("..", "models", "dga_1dcnn.pth"),
+        "dga_1dcnn.pth",
+        os.environ.get("MODEL_PATH", "")
+    ]
+    ckpt_path = next((c for c in candidates if c and os.path.exists(c)), os.path.join(models_dir, "dga_1dcnn.pth"))
     if not os.path.exists(ckpt_path):
         print(f"Error: {ckpt_path} not found. Run python model.py first.")
         return
@@ -25,7 +55,7 @@ def export():
 
     # 1. Export ONNX
     dummy_input = torch.randn(1, 24, 7, dtype=torch.float32)
-    onnx_paths = ["models/dga_1dcnn.onnx", "public/models/dga_1dcnn.onnx"]
+    onnx_paths = [os.path.join(models_dir, "dga_1dcnn.onnx"), os.path.join(public_models_dir, "dga_1dcnn.onnx")]
     for op in onnx_paths:
         torch.onnx.export(
             model,
@@ -43,7 +73,7 @@ def export():
     for k, v in state_dict.items():
         weights_dict[k] = v.detach().cpu().numpy().tolist()
 
-    json_path = "src/engine/model_weights.json"
+    json_path = os.path.join(engine_dir, "model_weights.json")
     with open(json_path, "w") as f:
         json.dump(weights_dict, f)
     print(f"Exported model weights JSON -> {json_path}")

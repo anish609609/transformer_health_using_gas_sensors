@@ -2,14 +2,27 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import os
+import sys
 import json
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(CURRENT_DIR)
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
+if ROOT_DIR not in sys.path:
+    sys.path.append(ROOT_DIR)
+
 try:
-    from generate_data import build_dataset, SCENARIOS
+    from backend.generate_data import build_dataset, SCENARIOS
     DEFAULT_NUM_CLASSES = len(SCENARIOS)
 except ImportError:
-    build_dataset = None
-    SCENARIOS = {}
-    DEFAULT_NUM_CLASSES = 9
+    try:
+        from generate_data import build_dataset, SCENARIOS
+        DEFAULT_NUM_CLASSES = len(SCENARIOS)
+    except ImportError:
+        build_dataset = None
+        SCENARIOS = {}
+        DEFAULT_NUM_CLASSES = 9
 
 class DGA1DCNN(nn.Module):
     def __init__(self, num_gases=7, window_size=24, num_classes=DEFAULT_NUM_CLASSES):
@@ -98,14 +111,16 @@ def train_model(epochs=25, samples_per_class=200):
                 acc = (preds == y_val_t).float().mean().item() * 100
             print(f"Epoch {epoch+1:2d}/{epochs} - Train Loss: {epoch_loss/num_batches:.4f} | Val Loss: {val_loss:.4f} | Val Acc: {acc:.2f}%")
         
-    os.makedirs("models", exist_ok=True)
+    save_dir = os.path.join(ROOT_DIR, "models")
+    os.makedirs(save_dir, exist_ok=True)
     checkpoint = {
         "model_state_dict": model.state_dict(),
         "num_classes": len(SCENARIOS),
         "scenarios": SCENARIOS
     }
-    torch.save(checkpoint, "models/dga_1dcnn.pth")
-    print(f"Model successfully saved to models/dga_1dcnn.pth with {len(SCENARIOS)} fault classes!")
+    save_path = os.path.join(save_dir, "dga_1dcnn.pth")
+    torch.save(checkpoint, save_path)
+    print(f"Model successfully saved to {save_path} with {len(SCENARIOS)} fault classes!")
 
 if __name__ == "__main__":
     train_model()

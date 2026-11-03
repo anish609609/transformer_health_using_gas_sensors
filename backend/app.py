@@ -5,7 +5,19 @@ import numpy as np
 from typing import List, Dict, Any, Tuple
 import gradio as gr
 
-from model import DGA1DCNN
+# Ensure backend directory and project root are accessible
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(CURRENT_DIR)
+import sys
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
+if ROOT_DIR not in sys.path:
+    sys.path.append(ROOT_DIR)
+
+try:
+    from backend.model import DGA1DCNN
+except ImportError:
+    from model import DGA1DCNN
 
 GAS_NAMES = ['H2', 'CH4', 'C2H6', 'C2H4', 'C2H2', 'CO', 'CO2']
 
@@ -98,8 +110,11 @@ CLASS_COLORS = {
 
 # Locate model weights checkpoint
 MODEL_CANDIDATES = [
-    "dga_1dcnn.pth",
+    os.path.join(ROOT_DIR, "models", "dga_1dcnn.pth"),
+    os.path.join(CURRENT_DIR, "models", "dga_1dcnn.pth"),
     os.path.join("models", "dga_1dcnn.pth"),
+    os.path.join("..", "models", "dga_1dcnn.pth"),
+    "dga_1dcnn.pth",
     os.environ.get("MODEL_PATH", "")
 ]
 

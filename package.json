@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "backend": "python backend/app.py",
+    "demo": "python backend/demo_all_possibilities.py",
+    "train": "python backend/model.py"
   },
   "dependencies": {
     "clsx": "^2.1.1",
