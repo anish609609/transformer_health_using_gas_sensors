@@ -32,12 +32,12 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
   isSimulatingFault,
 }) => {
   return (
-    <aside className="w-full lg:w-80 xl:w-88 shrink-0 bg-scada-panel/90 border-r border-scada-border p-3 flex flex-col gap-2.5 overflow-y-auto">
+    <aside className="w-full lg:w-80 xl:w-88 shrink-0 bg-slate-50 dark:bg-scada-panel/90 border-r border-slate-200 dark:border-scada-border p-3 flex flex-col gap-2.5 overflow-y-auto">
       {/* Header & Quick Action Buttons */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          <Sliders className="w-4 h-4 text-cyan-400" />
-          <h2 className="text-xs font-mono font-bold tracking-wider uppercase text-slate-200">
+          <Sliders className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+          <h2 className="text-xs font-mono font-bold tracking-wider uppercase text-slate-800 dark:text-slate-200">
             Telemetry Gas Injection
           </h2>
         </div>
@@ -46,10 +46,10 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
           <button
             onClick={onToggleNoise}
             title={noiseEnabled ? 'Sensor Noise: Enabled' : 'Sensor Noise: Disabled'}
-            className={`p-1.5 rounded text-xs transition border flex items-center gap-1 font-mono ${
+            className={`p-1.5 rounded text-xs transition border flex items-center gap-1 font-mono cursor-pointer ${
               noiseEnabled
-                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
-                : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'
+                ? 'bg-cyan-100 text-cyan-800 border-cyan-300 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/40'
+                : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-500 dark:border-slate-800 dark:hover:text-slate-300'
             }`}
           >
             <Radio className="w-3 h-3" />
@@ -59,7 +59,7 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
           <button
             onClick={onResetNominal}
             title="Reset All Gas Concentrations to Nominal Baseline"
-            className="p-1.5 rounded text-xs transition bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 flex items-center gap-1 font-mono"
+            className="p-1.5 rounded text-xs transition bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:text-white dark:hover:border-slate-700 flex items-center gap-1 font-mono cursor-pointer shadow-sm"
           >
             <RefreshCw className="w-3 h-3" />
             <span className="text-[10px]">Reset</span>
@@ -68,8 +68,8 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
       </div>
 
       {isSimulatingFault && (
-        <div className="px-3 py-2 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+        <div className="px-3 py-2 rounded-md bg-amber-50 border border-amber-300 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-300 text-xs flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
           <span>Preset scenario active. Modifying sliders overrides telemetry with custom injection.</span>
         </div>
       )}
@@ -170,7 +170,7 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
                 </div>
 
                 {isBreached && (
-                  <span className="flex items-center gap-0.5 text-amber-400 font-semibold">
+                  <span className="flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-semibold">
                     <AlertCircle className="w-2.5 h-2.5" />
                     +{(((val - meta.limit) / meta.limit) * 100).toFixed(0)}% OVER
                   </span>

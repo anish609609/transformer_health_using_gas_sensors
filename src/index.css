@@ -48,11 +48,13 @@ html:not(.dark) .bg-scada-bg {
   background-color: #f8fafc !important;
 }
 
-html:not(.dark) .bg-scada-panel {
-  background-color: #ffffff !important;
+html:not(.dark) .bg-scada-panel,
+html:not(.dark) .bg-scada-panel\/90 {
+  background-color: #f8fafc !important;
 }
 
-html:not(.dark) .bg-scada-card {
+html:not(.dark) .bg-scada-card,
+html:not(.dark) .bg-scada-card\/90 {
   background-color: #ffffff !important;
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08) !important;
 }
