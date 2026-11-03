@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Activity, 
   Play, 
@@ -8,9 +8,11 @@ import {
   Zap, 
   FileText,
   Sun,
-  Moon
+  Moon,
+  Globe
 } from 'lucide-react';
 import { SCENARIO_PRESETS, ScenarioInfo } from '../engine/scenarioPresets';
+import { StandardsReferenceModal } from './StandardsReferenceModal';
 
 interface TopExecutiveBarProps {
   currentScenario: string;
@@ -43,12 +45,21 @@ export const TopExecutiveBar: React.FC<TopExecutiveBarProps> = ({
 }) => {
   const scenariosList = Object.values(SCENARIO_PRESETS);
 
+  // Standards Reference Learning Modal state
+  const [standardsModalOpen, setStandardsModalOpen] = useState<boolean>(false);
+  const [initialStandardsTab, setInitialStandardsTab] = useState<'ieee' | 'iec'>('ieee');
+
+  const handleOpenStandards = (tab: 'ieee' | 'iec') => {
+    setInitialStandardsTab(tab);
+    setStandardsModalOpen(true);
+  };
+
   return (
     <header className="border-b border-scada-border bg-scada-bg sticky top-0 z-40 px-4 py-2.5">
       {/* Top Asset & Metrics Row */}
       <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 pb-2.5 border-b border-slate-800">
         
-        {/* Asset Identity & IEC 61850 Link */}
+        {/* Asset Identity */}
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-900 border border-slate-700 text-cyan-400">
             <Zap className="w-5 h-5 text-cyan-400" />
@@ -62,15 +73,32 @@ export const TopExecutiveBar: React.FC<TopExecutiveBarProps> = ({
                   315 MVA ONAF
                 </span>
               </h1>
-              <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                IEC 61850 SIML
-              </span>
             </div>
             <p className="text-xs text-slate-400 font-sans">
               Substation Digital Twin &bull; Dissolved Gas Analysis Fault Detector
             </p>
           </div>
+        </div>
+
+        {/* DGA Standards & Regulatory Learning Tabs */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => handleOpenStandards('ieee')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono transition bg-slate-900/90 border-slate-800 hover:border-cyan-500/50 hover:text-cyan-300 text-slate-200 cursor-pointer shadow-sm hover:bg-slate-800"
+            title="Open IEEE C57.104 Gas Thresholds & Standards Guide"
+          >
+            <FileText className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="font-semibold text-[11px]">IEEE C57.104 &amp; Thresholds</span>
+          </button>
+
+          <button
+            onClick={() => handleOpenStandards('iec')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono transition bg-slate-900/90 border-slate-800 hover:border-cyan-500/50 hover:text-cyan-300 text-slate-200 cursor-pointer shadow-sm hover:bg-slate-800"
+            title="Open IEC 60599 Ratios & IEC 61850 Substation Architecture Guide"
+          >
+            <Globe className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="font-semibold text-[11px]">IEC 60599 &amp; IEC 61850</span>
+          </button>
         </div>
 
         {/* Ticker Badges (Minimal, Clean) */}
@@ -179,6 +207,13 @@ export const TopExecutiveBar: React.FC<TopExecutiveBarProps> = ({
           </div>
         </div>
       </div>
+
+      {/* DGA Standards & Regulatory Learning Reference Modal */}
+      <StandardsReferenceModal
+        isOpen={standardsModalOpen}
+        onClose={() => setStandardsModalOpen(false)}
+        initialTab={initialStandardsTab}
+      />
     </header>
   );
 };
