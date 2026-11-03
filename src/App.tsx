@@ -204,15 +204,10 @@ export const App: React.FC = () => {
               />
             </div>
 
-            {/* Cell (1, 2): Actions to be Taken Suggested by AI Engine */}
+            {/* Cell (1, 2): Suggested Actions & Mitigations */}
             <div className="flex flex-col min-h-0">
               <ActionDispatchCard
                 actionProtocol={actionProtocol}
-                ieeeStatus={ieeeStatus}
-                duvalCoords={duvalCoords}
-                celluloseStatus={celluloseResult.status}
-                celluloseRisk={celluloseResult.risk}
-                celluloseRatio={celluloseResult.ratio}
               />
             </div>
 
