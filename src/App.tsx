@@ -192,16 +192,16 @@ export const App: React.FC = () => {
         />
 
         {/* User-Centric Main Workspace Flow:
-            1. Concentration Graph
-            2. Substation Automated Action Engine (just below gas chart)
-            3. Probability Chart & Simple Duval Triangle */}
-        <main className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto max-w-[1920px]">
+            1. Concentration Waveform Graph
+            2. Streamlined Interactive Action & Dispatch Toolbar (just below gas chart)
+            3. Consolidated 1D-CNN & Duval Triangle Diagnostic Grid */}
+        <main className="flex-1 p-3 flex flex-col gap-2.5 overflow-y-auto max-w-[1920px]">
           {/* 1. First: 24-Hour Concentration Telemetry Waveform Graph */}
           <TelemetryChart24h
             telemetryData={fullSequence.slice(0, playbackHour + 1)}
           />
 
-          {/* 2. Second: Substation Automated Action Engine & Directives (just below gas chart) */}
+          {/* 2. Second: Streamlined Substation Action & Dispatch Toolbar */}
           <ActionDispatchCard
             actionProtocol={actionProtocol}
             ieeeStatus={ieeeStatus}
@@ -211,14 +211,14 @@ export const App: React.FC = () => {
             celluloseRatio={celluloseResult.ratio}
           />
 
-          {/* 3. Third: 1D-CNN AI Probability Chart + Simple Duval Triangle */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {/* 3. Third: Consolidated 1D-CNN Probability Distribution & Duval Triangle 1 */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
             <CnnConfidenceCard inference={cnnInference} />
             <DuvalTrianglePlot currentDuval={duvalCoords} />
           </div>
 
           {/* Substation Footer */}
-          <footer className="text-center text-xs font-mono text-slate-500 py-3 border-t border-slate-900 mt-2 flex flex-col sm:flex-row items-center justify-center">
+          <footer className="text-center text-[11px] font-mono text-slate-500 py-1.5 border-t border-slate-900 mt-1 flex flex-col sm:flex-row items-center justify-center">
             <div>
               ⚡ <strong>Substation Digital Twin v2.0</strong> &bull; IEEE C57.104-2019 / IEC 60599 &bull; 1D-CNN Diagnostic Engine
             </div>

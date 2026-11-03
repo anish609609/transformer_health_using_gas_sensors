@@ -84,7 +84,7 @@ export const TelemetryChart24h: React.FC<TelemetryChart24hProps> = ({
   };
 
   return (
-    <div className="bg-scada-card border border-scada-border rounded-xl p-4 flex flex-col gap-3 shadow-lg">
+    <div className="bg-scada-card border border-scada-border rounded-xl p-3.5 flex flex-col gap-2.5 shadow-lg">
       {/* Header & Scale Toggles */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800">
         <div className="flex items-center gap-2">
@@ -184,7 +184,7 @@ export const TelemetryChart24h: React.FC<TelemetryChart24hProps> = ({
       </div>
 
       {/* Recharts Container */}
-      <div className="w-full h-64 sm:h-72">
+      <div className="w-full h-48 sm:h-52">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 10, right: 15, left: -15, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.6} />

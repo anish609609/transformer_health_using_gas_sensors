@@ -32,7 +32,7 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
   isSimulatingFault,
 }) => {
   return (
-    <aside className="w-full lg:w-80 xl:w-96 shrink-0 bg-scada-panel/90 border-r border-scada-border p-4 flex flex-col gap-4 overflow-y-auto">
+    <aside className="w-full lg:w-80 xl:w-88 shrink-0 bg-scada-panel/90 border-r border-scada-border p-3 flex flex-col gap-2.5 overflow-y-auto">
       {/* Header & Quick Action Buttons */}
       <div className="flex items-center justify-between pb-2 border-b border-slate-800">
         <div className="flex items-center gap-2">
@@ -75,7 +75,7 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
       )}
 
       {/* 7 Gas Control Sliders */}
-      <div className="flex flex-col gap-3.5">
+      <div className="flex flex-col gap-2">
         {GAS_NAMES.map((gasKey: GasKey) => {
           const meta = GAS_METADATA[gasKey];
           const range = GAS_SLIDER_RANGES[gasKey];
@@ -90,7 +90,7 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
           return (
             <div
               key={gasKey}
-              className={`p-2.5 rounded-lg border transition-all ${
+              className={`p-2 rounded-lg border transition-all ${
                 isCriticalC2H2
                   ? 'bg-rose-950/20 border-rose-500/50'
                   : isBreached
@@ -99,7 +99,7 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
               }`}
             >
               {/* Gas Label & Value Header */}
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1.5">
                   <span
                     className="w-2 h-2 rounded-full"
