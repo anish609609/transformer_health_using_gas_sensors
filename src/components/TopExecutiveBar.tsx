@@ -1,7 +1,6 @@
 import React from 'react';
 import { 
   Activity, 
-  AlertTriangle, 
   Play, 
   Pause, 
   RotateCcw, 
@@ -10,7 +9,6 @@ import {
   FileText 
 } from 'lucide-react';
 import { SCENARIO_PRESETS, ScenarioInfo } from '../engine/scenarioPresets';
-import { IEEEValidationResult } from '../engine/dgaStandards';
 
 interface TopExecutiveBarProps {
   currentScenario: string;
@@ -19,11 +17,11 @@ interface TopExecutiveBarProps {
   onTogglePlay: () => void;
   onReset: () => void;
   playbackHour: number; // 0 to 23
-  ieeeStatus: IEEEValidationResult;
   tdcg: number;
   celluloseRatio: number;
   paperRisk: 'Low' | 'Moderate' | 'High';
-  activeZoneCode: string;
+  ieeeStatus?: any;
+  activeZoneCode?: string;
 }
 
 export const TopExecutiveBar: React.FC<TopExecutiveBarProps> = ({
@@ -33,21 +31,11 @@ export const TopExecutiveBar: React.FC<TopExecutiveBarProps> = ({
   onTogglePlay,
   onReset,
   playbackHour,
-  ieeeStatus,
   tdcg,
   celluloseRatio,
   paperRisk,
-  activeZoneCode,
 }) => {
   const scenariosList = Object.values(SCENARIO_PRESETS);
-
-  // Condition Badge styling (clean, no animations)
-  const conditionColorMap = {
-    'Condition 1': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-    'Condition 2': 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-    'Condition 3': 'bg-orange-500/15 text-orange-400 border-orange-500/30',
-    'Condition 4': 'bg-rose-500/20 text-rose-400 border-rose-500/40',
-  };
 
   return (
     <header className="border-b border-scada-border bg-scada-bg sticky top-0 z-40 px-4 py-2.5">
@@ -81,22 +69,6 @@ export const TopExecutiveBar: React.FC<TopExecutiveBarProps> = ({
 
         {/* Ticker Badges (Minimal, Clean) */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-          {/* IEEE C57.104 & Duval Status */}
-          <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 rounded-lg px-3 py-1.5">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <div>
-              <div className="text-[10px] uppercase font-mono tracking-wider text-slate-400">IEEE &bull; Duval</div>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className={`text-[11px] font-bold font-mono px-1.5 py-0.2 rounded border ${conditionColorMap[ieeeStatus.condition]}`}>
-                  {ieeeStatus.condition.split(' ')[1] || ieeeStatus.condition}
-                </span>
-                <span className="text-[11px] font-bold font-mono px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-cyan-300">
-                  {activeZoneCode}
-                </span>
-              </div>
-            </div>
-          </div>
-
           {/* TDCG Score */}
           <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 rounded-lg px-3 py-1.5">
             <Flame className="w-4 h-4 text-cyan-400" />
