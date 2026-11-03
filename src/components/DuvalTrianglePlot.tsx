@@ -9,15 +9,15 @@ interface DuvalTrianglePlotProps {
 export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
   currentDuval,
 }) => {
-  // Triangle SVG Canvas Geometry (400x320)
-  const topV = { x: 250, y: 35 };     // %CH4 = 100%
-  const leftV = { x: 70, y: 285 };   // %C2H4 = 100%
-  const rightV = { x: 430, y: 285 };  // %C2H2 = 100%
+  // Triangle SVG Canvas Geometry (540 x 375)
+  const topV = { x: 270, y: 45 };     // %CH4 = 100% (Apex)
+  const leftV = { x: 110, y: 315 };   // %C2H4 = 100% (Bottom-Left)
+  const rightV = { x: 430, y: 315 };  // %C2H2 = 100% (Bottom-Right)
 
   // Barycentric coordinate projection
   const project = (ch4: number, c2h4: number, c2h2: number) => {
     const total = ch4 + c2h4 + c2h2;
-    if (total <= 0) return { x: 250, y: 190 };
+    if (total <= 0) return { x: 270, y: 180 };
     const wa = ch4 / total;
     const wb = c2h4 / total;
     const wc = c2h2 / total;
@@ -34,18 +34,23 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
     }).join(' ');
   };
 
-  // Standard Duval Triangle 1 Zones
+  // Standard Duval Triangle 1 Diagnostic Zones with centroids for text labels
   const DUVAL_ZONES = [
-    { code: 'PD', label: 'PD', color: '#0284c7', points: toSvgPoints([[100, 0, 0], [98, 2, 0], [98, 0, 2]]) },
-    { code: 'T1', label: 'T1 (<300°)', color: '#0d9488', points: toSvgPoints([[98, 2, 0], [80, 20, 0], [76, 20, 4], [96, 0, 4], [98, 0, 2]]) },
-    { code: 'T2', label: 'T2 (300-700°)', color: '#d97706', points: toSvgPoints([[80, 20, 0], [50, 50, 0], [46, 50, 4], [76, 20, 4]]) },
-    { code: 'T3', label: 'T3 (>700°)', color: '#dc2626', points: toSvgPoints([[50, 50, 0], [0, 100, 0], [0, 85, 15], [35, 50, 15], [46, 50, 4]]) },
-    { code: 'DT', label: 'DT', color: '#9333ea', points: toSvgPoints([[76, 20, 4], [46, 50, 4], [35, 50, 15], [48, 23, 29], [64, 23, 13]]) },
-    { code: 'D1', label: 'D1 (Spark)', color: '#ea580c', points: toSvgPoints([[87, 0, 13], [64, 23, 13], [48, 23, 29], [71, 0, 29]]) },
-    { code: 'D2', label: 'D2 (Arc)', color: '#be123c', points: toSvgPoints([[71, 0, 29], [48, 23, 29], [35, 50, 15], [0, 85, 15], [0, 0, 100]]) },
+    { code: 'PD', label: 'PD (Partial Discharge)', color: '#0284c7', centroid: project(98.8, 0.6, 0.6), points: toSvgPoints([[100, 0, 0], [98, 2, 0], [98, 0, 2]]) },
+    { code: 'T1', label: 'T1 (<300°C)', color: '#0d9488', centroid: project(88, 10, 2), points: toSvgPoints([[98, 2, 0], [80, 20, 0], [76, 20, 4], [96, 0, 4], [98, 0, 2]]) },
+    { code: 'T2', label: 'T2 (300-700°C)', color: '#d97706', centroid: project(63, 34, 3), points: toSvgPoints([[80, 20, 0], [50, 50, 0], [46, 50, 4], [76, 20, 4]]) },
+    { code: 'T3', label: 'T3 (>700°C)', color: '#dc2626', centroid: project(25, 68, 7), points: toSvgPoints([[50, 50, 0], [0, 100, 0], [0, 85, 15], [35, 50, 15], [46, 50, 4]]) },
+    { code: 'DT', label: 'DT (Thermal/Electrical)', color: '#9333ea', centroid: project(52, 34, 14), points: toSvgPoints([[76, 20, 4], [46, 50, 4], [35, 50, 15], [48, 23, 29], [64, 23, 13]]) },
+    { code: 'D1', label: 'D1 (Low Energy Spark)', color: '#ea580c', centroid: project(67, 12, 21), points: toSvgPoints([[87, 0, 13], [64, 23, 13], [48, 23, 29], [71, 0, 29]]) },
+    { code: 'D2', label: 'D2 (High Energy Arc)', color: '#be123c', centroid: project(28, 26, 46), points: toSvgPoints([[71, 0, 29], [48, 23, 29], [35, 50, 15], [0, 85, 15], [0, 0, 100]]) },
   ];
 
   const currentPt = project(currentDuval.pctCH4, currentDuval.pctC2H4, currentDuval.pctC2H2);
+
+  // Scale ticks (0, 20, 40, 60, 80, 100%)
+  const majorTicks = [0, 20, 40, 60, 80, 100];
+  const minorTicks = [10, 30, 50, 70, 90];
+  const gridPercentages = [20, 40, 60, 80];
 
   return (
     <div className="bg-scada-card border border-scada-border rounded-xl p-4 flex flex-col gap-3 shadow-lg">
@@ -63,18 +68,37 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
         </span>
       </div>
 
-      {/* Clean SVG Canvas */}
-      <div className="w-full flex items-center justify-center bg-slate-950/80 rounded-lg border border-slate-800 p-2">
-        <svg viewBox="0 0 500 320" className="w-full max-w-[460px] select-none" xmlns="http://www.w3.org/2000/svg">
-          {/* Base Triangle */}
+      {/* Axis Color & Corresponding Element Legend */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono">
+        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-orange-950/30 border border-orange-500/40">
+          <span className="w-3 h-1.5 bg-orange-400 rounded-sm inline-block" />
+          <span className="font-bold text-orange-400">Orange Line:</span>
+          <span className="text-slate-200 font-semibold">%CH₄ (Methane)</span>
+        </div>
+        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-purple-950/30 border border-purple-500/40">
+          <span className="w-3 h-1.5 bg-purple-400 rounded-sm inline-block" />
+          <span className="font-bold text-purple-400">Purple Line:</span>
+          <span className="text-slate-200 font-semibold">%C₂H₄ (Ethylene)</span>
+        </div>
+        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-rose-950/30 border border-rose-500/40">
+          <span className="w-3 h-1.5 bg-rose-500 rounded-sm inline-block" />
+          <span className="font-bold text-rose-400">Red Line:</span>
+          <span className="text-slate-200 font-semibold">%C₂H₂ (Acetylene)</span>
+        </div>
+      </div>
+
+      {/* High-Clarity SVG Canvas with Scales, Ticks & Color-Coded Lines */}
+      <div className="w-full flex items-center justify-center bg-slate-950/90 rounded-lg border border-slate-800 p-2 overflow-hidden">
+        <svg viewBox="0 0 540 375" className="w-full max-w-[500px] select-none" xmlns="http://www.w3.org/2000/svg">
+          {/* Base Triangle Background */}
           <polygon
             points={`${topV.x},${topV.y} ${leftV.x},${leftV.y} ${rightV.x},${rightV.y}`}
             fill="#090d16"
-            stroke="#334155"
-            strokeWidth="1.5"
+            stroke="#1e293b"
+            strokeWidth="1"
           />
 
-          {/* Zones */}
+          {/* Diagnostic Zones */}
           {DUVAL_ZONES.map((zone) => {
             const isMatch = currentDuval.zoneCode === zone.code;
             return (
@@ -82,7 +106,7 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
                 key={zone.code}
                 points={zone.points}
                 fill={zone.color}
-                fillOpacity={isMatch ? 0.6 : 0.25}
+                fillOpacity={isMatch ? 0.6 : 0.22}
                 stroke={zone.color}
                 strokeWidth={isMatch ? 2 : 1}
               >
@@ -91,7 +115,253 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
             );
           })}
 
-          {/* Current Operating Point (Clean solid marker, no blinking) */}
+          {/* Subtle Gridlines for 20%, 40%, 60%, 80% */}
+          {gridPercentages.map((p) => {
+            const ch4Left = project(p, 100 - p, 0);
+            const ch4Right = project(p, 0, 100 - p);
+
+            const c2h4Left = project(100 - p, p, 0);
+            const c2h4Bottom = project(0, p, 100 - p);
+
+            const c2h2Bottom = project(0, 100 - p, p);
+            const c2h2Right = project(100 - p, 0, p);
+
+            return (
+              <g key={`grid-${p}`}>
+                {/* Horizontal %CH4 gridline */}
+                <line
+                  x1={ch4Left.x} y1={ch4Left.y}
+                  x2={ch4Right.x} y2={ch4Right.y}
+                  stroke="#fb923c" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.2"
+                />
+                {/* %C2H4 gridline */}
+                <line
+                  x1={c2h4Left.x} y1={c2h4Left.y}
+                  x2={c2h4Bottom.x} y2={c2h4Bottom.y}
+                  stroke="#c084fc" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.2"
+                />
+                {/* %C2H2 gridline */}
+                <line
+                  x1={c2h2Bottom.x} y1={c2h2Bottom.y}
+                  x2={c2h2Right.x} y2={c2h2Right.y}
+                  stroke="#f43f5e" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.2"
+                />
+              </g>
+            );
+          })}
+
+          {/* Zone Codes rendered inside each polygon */}
+          {DUVAL_ZONES.map((zone) => (
+            <text
+              key={`label-${zone.code}`}
+              x={zone.centroid.x}
+              y={zone.centroid.y}
+              fill="#ffffff"
+              fillOpacity={currentDuval.zoneCode === zone.code ? 1 : 0.65}
+              fontSize={zone.code === 'PD' ? '8' : '10'}
+              fontFamily="monospace"
+              fontWeight="bold"
+              textAnchor="middle"
+              dominantBaseline="central"
+              pointerEvents="none"
+            >
+              {zone.code}
+            </text>
+          ))}
+
+          {/* ============================================================ */}
+          {/* AXIS 1: LEFT EDGE — %C₂H₄ (Ethylene) Top to Bottom-Left (Purple) */}
+          {/* ============================================================ */}
+          <line
+            x1={topV.x} y1={topV.y}
+            x2={leftV.x} y2={leftV.y}
+            stroke="#c084fc" strokeWidth="3" strokeLinecap="round"
+          />
+
+          {/* Left Edge Minor Ticks (10, 30, 50, 70, 90) */}
+          {minorTicks.map((p) => {
+            const f = p / 100;
+            const px = (1 - f) * topV.x + f * leftV.x;
+            const py = (1 - f) * topV.y + f * leftV.y;
+            return (
+              <line
+                key={`c2h4-minor-${p}`}
+                x1={px} y1={py}
+                x2={px - 4 * 0.860} y2={py - 4 * 0.510}
+                stroke="#c084fc" strokeWidth="1" strokeOpacity="0.6"
+              />
+            );
+          })}
+
+          {/* Left Edge Major Ticks & Numbers (0, 20, 40, 60, 80, 100) */}
+          {majorTicks.map((p) => {
+            const f = p / 100;
+            const px = (1 - f) * topV.x + f * leftV.x;
+            const py = (1 - f) * topV.y + f * leftV.y;
+            const tx = px - 7 * 0.860;
+            const ty = py - 7 * 0.510;
+            const lx = px - 13 * 0.860;
+            const ly = py - 13 * 0.510;
+            return (
+              <g key={`c2h4-${p}`}>
+                <line x1={px} y1={py} x2={tx} y2={ty} stroke="#c084fc" strokeWidth="1.5" />
+                <text
+                  x={lx} y={ly}
+                  fill="#c084fc"
+                  fontSize="10"
+                  fontFamily="monospace"
+                  fontWeight="600"
+                  textAnchor="end"
+                  dominantBaseline="central"
+                >
+                  {p}%
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Left Axis Label */}
+          <text
+            x={130} y={160}
+            transform="rotate(-59.4 130 160)"
+            fill="#c084fc"
+            fontSize="11"
+            fontFamily="monospace"
+            fontWeight="bold"
+            textAnchor="middle"
+          >
+            ↙ %C₂H₄ (Ethylene) Scale
+          </text>
+
+          {/* ============================================================ */}
+          {/* AXIS 2: BOTTOM EDGE — %C₂H₂ (Acetylene) Left to Right (Red) */}
+          {/* ============================================================ */}
+          <line
+            x1={leftV.x} y1={leftV.y}
+            x2={rightV.x} y2={rightV.y}
+            stroke="#f43f5e" strokeWidth="3" strokeLinecap="round"
+          />
+
+          {/* Bottom Edge Minor Ticks */}
+          {minorTicks.map((p) => {
+            const f = p / 100;
+            const px = (1 - f) * leftV.x + f * rightV.x;
+            return (
+              <line
+                key={`c2h2-minor-${p}`}
+                x1={px} y1={315}
+                x2={px} y2={319}
+                stroke="#f43f5e" strokeWidth="1" strokeOpacity="0.6"
+              />
+            );
+          })}
+
+          {/* Bottom Edge Major Ticks & Numbers */}
+          {majorTicks.map((p) => {
+            const f = p / 100;
+            const px = (1 - f) * leftV.x + f * rightV.x;
+            return (
+              <g key={`c2h2-${p}`}>
+                <line x1={px} y1={315} x2={px} y2={322} stroke="#f43f5e" strokeWidth="1.5" />
+                <text
+                  x={px} y={333}
+                  fill="#f43f5e"
+                  fontSize="10"
+                  fontFamily="monospace"
+                  fontWeight="600"
+                  textAnchor="middle"
+                  dominantBaseline="hanging"
+                >
+                  {p}%
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Bottom Axis Label */}
+          <text
+            x={270} y={358}
+            fill="#f43f5e"
+            fontSize="11"
+            fontFamily="monospace"
+            fontWeight="bold"
+            textAnchor="middle"
+          >
+            → %C₂H₂ (Acetylene) Scale
+          </text>
+
+          {/* ============================================================ */}
+          {/* AXIS 3: RIGHT EDGE — %CH₄ (Methane) Right to Top (Orange) */}
+          {/* ============================================================ */}
+          <line
+            x1={rightV.x} y1={rightV.y}
+            x2={topV.x} y2={topV.y}
+            stroke="#fb923c" strokeWidth="3" strokeLinecap="round"
+          />
+
+          {/* Right Edge Minor Ticks */}
+          {minorTicks.map((p) => {
+            const f = p / 100;
+            const px = (1 - f) * rightV.x + f * topV.x;
+            const py = (1 - f) * rightV.y + f * topV.y;
+            return (
+              <line
+                key={`ch4-minor-${p}`}
+                x1={px} y1={py}
+                x2={px + 4 * 0.860} y2={py - 4 * 0.510}
+                stroke="#fb923c" strokeWidth="1" strokeOpacity="0.6"
+              />
+            );
+          })}
+
+          {/* Right Edge Major Ticks & Numbers */}
+          {majorTicks.map((p) => {
+            const f = p / 100;
+            const px = (1 - f) * rightV.x + f * topV.x;
+            const py = (1 - f) * rightV.y + f * topV.y;
+            const tx = px + 7 * 0.860;
+            const ty = py - 7 * 0.510;
+            const lx = px + 13 * 0.860;
+            const ly = py - 13 * 0.510;
+            return (
+              <g key={`ch4-${p}`}>
+                <line x1={px} y1={py} x2={tx} y2={ty} stroke="#fb923c" strokeWidth="1.5" />
+                <text
+                  x={lx} y={ly}
+                  fill="#fb923c"
+                  fontSize="10"
+                  fontFamily="monospace"
+                  fontWeight="600"
+                  textAnchor="start"
+                  dominantBaseline="central"
+                >
+                  {p}%
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Right Axis Label */}
+          <text
+            x={410} y={160}
+            transform="rotate(59.4 410 160)"
+            fill="#fb923c"
+            fontSize="11"
+            fontFamily="monospace"
+            fontWeight="bold"
+            textAnchor="middle"
+          >
+            ↗ %CH₄ (Methane) Scale
+          </text>
+
+          {/* ============================================================ */}
+          {/* APEX / VERTEX SUMMARY BADGES */}
+          {/* ============================================================ */}
+          <text x={topV.x} y={topV.y - 25} fill="#fb923c" fontSize="11" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+            Apex: 100% CH₄
+          </text>
+
+          {/* Current Operating Point Marker */}
           <circle
             cx={currentPt.x}
             cy={currentPt.y}
@@ -101,22 +371,6 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
             strokeWidth="2"
           />
           <circle cx={currentPt.x} cy={currentPt.y} r="2" fill="#020617" />
-
-          {/* Vertex Labels */}
-          {/* Top: %CH4 */}
-          <text x={topV.x} y={topV.y - 10} fill="#fb923c" fontSize="12" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
-            %CH₄ (Methane)
-          </text>
-
-          {/* Bottom-Left: %C2H4 */}
-          <text x={leftV.x - 10} y={leftV.y + 18} fill="#c084fc" fontSize="11" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
-            %C₂H₄ (Ethylene)
-          </text>
-
-          {/* Bottom-Right: %C2H2 */}
-          <text x={rightV.x + 10} y={rightV.y + 18} fill="#f43f5e" fontSize="11" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
-            %C₂H₂ (Acetylene)
-          </text>
         </svg>
       </div>
 
