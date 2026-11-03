@@ -7,6 +7,7 @@
 [![AI Engine: PyTorch 1D-CNN](https://img.shields.io/badge/AI_Engine-PyTorch_1D--CNN-EE4C2C?style=for-the-badge&logo=pytorch)](https://pytorch.org)
 [![Standards: IEEE C57.104 | IEC 60599](https://img.shields.io/badge/Compliance-IEEE_C57.104_%7C_IEC_60599-00629B?style=for-the-badge)](#)
 [![Substation Automation: IEC 61850](https://img.shields.io/badge/Substation-IEC_61850-2E7D32?style=for-the-badge)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 ---
 
@@ -318,3 +319,9 @@ npm run train
 2. **IEC 60599:2022:** *Mineral oil-filled electrical equipment in service — Guidance on the interpretation of dissolved and free gases analysis.*
 3. **Duval, M. (2002):** *A Review of Faults Detectable by DGA in Transformers.* IEEE Electrical Insulation Magazine, Vol. 18, No. 3.
 4. **IEC 61850-7-4:** *Communication networks and systems for power utility automation — Logical node classes (`SIML`, `GGIO`, `GOOSE`).*
+
+---
+
+## 📄 License
+
+This project is open source and available under the terms of the [MIT License](LICENSE).
