@@ -3,18 +3,25 @@ node_modules/
 dist/
 .vite/
 
-# Byte-compiled / optimized / DLL files
+# Python Byte-compiled / optimized / virtualenvs
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Environments
-.env
-.env.local
 .venv
 env/
 venv/
 ENV/
+
+# Heavy Machine Learning Model Binaries (Hosted on Hugging Face Spaces)
+models/*.pth
+models/*.onnx
+models/*.onnx.data
+public/models/
+*.wasm
+
+# Environments & Local Configs
+.env
+.env.local
 
 # IDE & Editor files
 .vscode/

@@ -2,8 +2,8 @@
 
 > **A High-Precision Hybrid 1D-CNN Deep Learning & IEEE C57.104 / IEC 60599 / Duval Triangle 1 Expert Diagnostic Platform for High-Voltage Substation Power Transformers.**
 
-[![Frontend: React 18 + TypeScript](https://img.shields.io/badge/Frontend-React_18_%2B_TypeScript-61DAFB?style=for-the-badge&logo=react)](https://react.dev)
-[![AI Engine: PyTorch 1D-CNN + ONNX](https://img.shields.io/badge/AI_Engine-PyTorch_1D--CNN_%2B_ONNX-EE4C2C?style=for-the-badge&logo=pytorch)](https://pytorch.org)
+[![Frontend: React 18 + Vite on Vercel](https://img.shields.io/badge/Frontend-React_18_%2B_Vite_on_Vercel-000000?style=for-the-badge&logo=vercel)](https://vercel.com)
+[![AI Engine: PyTorch 1D-CNN on Hugging Face Spaces](https://img.shields.io/badge/AI_Engine-PyTorch_1D--CNN_on_HuggingFace_Spaces-FFD21E?style=for-the-badge&logo=huggingface)](https://huggingface.co)
 [![Standards: IEEE C57.104 | IEC 60599](https://img.shields.io/badge/Compliance-IEEE_C57.104_%7C_IEC_60599-00629B?style=for-the-badge)](#)
 [![Substation Automation: IEC 61850](https://img.shields.io/badge/Substation-IEC_61850-2E7D32?style=for-the-badge)](#)
 
@@ -151,7 +151,7 @@ $$\tilde{X}_c(t) = \frac{\ln(1 + X_c(t)) - \mu_c}{\sigma_c + 10^{-6}}$$
 | **Output Layer**| `Linear(64, 9)` + `Softmax` | $[B, 64]$ | $[B, 9]$ | Calibrated 9-class probability distribution |
 
 - **Validation Performance:** Achieves **$99.8\% - 100.0\%$ validation accuracy** across all 9 classes.
-- **Client-Side Edge Execution:** Zero-latency forward pass implemented in native TypeScript (`src/engine/cnnInference.ts`) and ONNX Web Runtime (`onnxruntime-web`), executing in under **$0.2\text{ms}$** directly in the browser.
+- **Decoupled Architecture:** Inference is hosted on **Hugging Face Spaces** via a Gradio PyTorch API (`app.py`), with resilient zero-latency local fallback execution (<0.2ms) directly in the browser during cold-starts or network interruptions.
 
 ---
 
@@ -205,43 +205,67 @@ $$\text{Cellulose Ratio} = \frac{[CO_2]}{[CO]}$$
 
 ```text
 GAS_fault_detector/
-├── src/                          # React 18 + TypeScript Frontend
+├── src/                          # React 18 + TypeScript Frontend (Deployed on Vercel)
 │   ├── components/
 │   │   ├── TopExecutiveBar.tsx   # Header, 9-scenario pills, 24h playback, learning tabs & theme toggle
 │   │   ├── GasControlSliders.tsx # 7-gas injection sliders with IEEE limits & noise toggle
 │   │   ├── TelemetryChart24h.tsx # 24h multi-gas waveform trend (Linear / Log10 toggle & IEEE limits)
 │   │   ├── ActionDispatchCard.tsx# Isolated operational mitigations & field diagnostic work-orders
-│   │   ├── CnnConfidenceCard.tsx # 9-class Softmax probability distribution & model inspector modal
+│   │   ├── CnnConfidenceCard.tsx # 9-class Softmax probability distribution, Hugging Face Space status & inspector
 │   │   ├── DuvalTrianglePlot.tsx # Duval Triangle 1 ternary diagram with scale numbers & zone codes
 │   │   └── StandardsReferenceModal.tsx # Multi-tab DGA educational guide (IEEE C57.104 & IEC 60599/61850)
 │   ├── engine/
 │   │   ├── dgaStandards.ts       # IEEE C57.104, IEC 60599, TDCG & Duval Triangle math
-│   │   ├── cnnInference.ts       # Client-side 1D-CNN forward pass (<0.2ms latency)
+│   │   ├── cnnInference.ts       # Hugging Face Gradio Space API client with instant client fallback
 │   │   ├── actionProtocol.ts     # Operational mitigations & work-order arbitration
-│   │   ├── scenarioPresets.ts    # 24-hour time-series sequences for all 9 fault scenarios
-│   │   └── model_weights.json    # Exported weights from trained PyTorch model
+│   │   └── scenarioPresets.ts    # 24-hour time-series sequences for all 9 fault scenarios
 │   ├── App.tsx                   # Main Substation Digital Twin 2x2 Grid Orchestrator
 │   ├── index.css                 # Tailwind CSS styles, CSS variables & dual-theme overrides
-│   └── main.tsx                  # React DOM entry point
-├── models/
-│   ├── dga_1dcnn.pth             # Trained PyTorch 1D-CNN weights checkpoint
-│   └── dga_1dcnn.onnx            # Exported ONNX model
-├── public/
-│   └── models/
-│       └── dga_1dcnn.onnx        # Static public ONNX model for onnxruntime-web
-├── export_onnx.py                # PyTorch to ONNX export script
+│   ├── main.tsx                  # React DOM entry point
+│   └── vite-env.d.ts             # Vite client environment declarations (VITE_HF_API_URL)
+├── app.py                        # Hugging Face Spaces Gradio API backend with PyTorch 1D-CNN
 ├── model.py                      # PyTorch 1D-CNN architecture & training script
 ├── generate_data.py              # Physics-informed 24h 7-gas synthetic data generator
+├── dga_1dcnn.pth                 # Trained PyTorch 1D-CNN weights (loaded by Hugging Face Space)
+├── requirements.txt              # Hugging Face Space dependencies (gradio, torch, numpy)
+├── vercel.json                   # Vercel SPA deployment configuration
+├── .vercelignore                 # Excludes heavy ML binaries & python scripts from Vercel bundle
 ├── package.json                  # React + Vite + Tailwind dependencies
-├── requirements.txt              # Python ML training dependencies
-└── README.md                     # Comprehensive Investor & Engineering Documentation
+└── README.md                     # Comprehensive Substation & AI Documentation
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Deployment & Local Execution
 
-### 1. Run the Frontend Locally
+### 1. Hugging Face Spaces (ML Backend Deployment)
+The machine learning inference backend runs as a dedicated Hugging Face Space with Gradio and PyTorch:
+1. Create a new **Gradio Space** on [Hugging Face Spaces](https://huggingface.co/spaces).
+2. Push or upload:
+   - `app.py`
+   - `model.py`
+   - `dga_1dcnn.pth`
+   - `requirements.txt`
+3. The Space will automatically build and expose:
+   - Interactive Gradio UI: `https://<your-space-name>.hf.space`
+   - REST API endpoint: `POST https://<your-space-name>.hf.space/predict`
+   - Gradio client endpoint: `POST https://<your-space-name>.hf.space/api/predict`
+
+To test locally:
+```bash
+pip install -r requirements.txt
+python app.py
+# Running on http://127.0.0.1:7860
+```
+
+### 2. Vercel Frontend Deployment
+The frontend is optimized for zero-overhead static hosting on **Vercel**:
+1. Connect your repository to **Vercel**.
+2. Set the environment variable in Vercel project settings:
+   - `VITE_HF_API_URL`: `https://<your-space-name>.hf.space`
+3. Deploy! Vercel automatically applies `.vercelignore` to exclude python scripts, weights, and caches, producing a lightweight bundle under **700 kB**.
+
+### 3. Run Frontend Locally
 ```bash
 # Install dependencies
 npm install
@@ -251,17 +275,6 @@ npm run dev
 
 # Run production build
 npm run build
-```
-
-### 2. Retrain or Export the 1D-CNN Model (Optional)
-```bash
-pip install -r requirements.txt
-
-# Train PyTorch 1D-CNN (~5s on CPU) and save weights to models/dga_1dcnn.pth
-python model.py
-
-# Export to ONNX and JSON weights
-python export_onnx.py
 ```
 
 ---

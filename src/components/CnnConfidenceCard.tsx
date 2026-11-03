@@ -51,8 +51,11 @@ export const CnnConfidenceCard: React.FC<CnnConfidenceCardProps> = ({
                   {inference.confidence.toFixed(1)}%
                 </span>
               </div>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400">
-                {inference.executionTimeMs}ms
+              <span
+                className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400"
+                title={inference.isFallback ? 'Hugging Face Space is cold-starting or offline; resilient local diagnostic fallback active.' : 'Inference served live via Hugging Face Space Gradio API.'}
+              >
+                {inference.isFallback ? 'Cold-Start Fallback' : `${inference.executionTimeMs}ms (HF API)`}
               </span>
             </div>
           </div>
@@ -88,8 +91,8 @@ export const CnnConfidenceCard: React.FC<CnnConfidenceCardProps> = ({
 
         {/* Footer Note */}
         <div className="pt-2 border-t border-slate-200 dark:border-slate-800/90 flex items-center justify-between text-[10px] font-mono text-slate-500">
-          <span>Inference: PyTorch Conv1D Engine</span>
-          <span>Zero-Latency Client-Side</span>
+          <span>Backend: Hugging Face Space (Gradio)</span>
+          <span>PyTorch 1D-CNN</span>
         </div>
       </div>
 
@@ -131,9 +134,9 @@ export const CnnConfidenceCard: React.FC<CnnConfidenceCardProps> = ({
                 <div className="text-[9px] text-slate-500">Stratified Test</div>
               </div>
               <div className="bg-slate-50 border border-slate-200 dark:bg-slate-900/90 dark:border-slate-800 p-2.5 rounded-lg shadow-sm">
-                <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Latency</div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">&lt; 0.2 ms</div>
-                <div className="text-[9px] text-slate-500">Native TS Engine</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Backend</div>
+                <div className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">HF Gradio</div>
+                <div className="text-[9px] text-slate-500">PyTorch &bull; Vercel Decoupled</div>
               </div>
             </div>
 

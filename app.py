@@ -1,562 +1,301 @@
-import streamlit as st
-import numpy as np
-import pandas as pd
+import os
+import time
 import torch
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import numpy as np
+from typing import List, Dict, Any, Tuple
+import gradio as gr
 
-from generate_data import generate_sequence, SCENARIOS, GAS_NAMES
 from model import DGA1DCNN
-from validator import StandardsValidator
-from action_engine import ActionEngine
 
-# ---------------------------------------------------------
-# Page Configuration
-# ---------------------------------------------------------
-st.set_page_config(
-    page_title="Substation AI Digital Twin - DGA Fault Diagnostic Engine",
-    page_icon="⚡",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+GAS_NAMES = ['H2', 'CH4', 'C2H6', 'C2H4', 'C2H2', 'CO', 'CO2']
 
-# Custom Styling for Substation Digital Twin Theme
-st.markdown("""
-<style>
-    .metric-card {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        padding: 12px;
-        border-left: 5px solid #007bff;
+SCENARIOS = {
+    "normal": {
+        "id": 0,
+        "name": "Normal Operation (Healthy Baseline)",
+        "code": "NORM",
+        "desc": "Baseline aging within normal operational limits. No active electrical or thermal discharge."
+    },
+    "pd": {
+        "id": 1,
+        "name": "Partial Discharge (PD)",
+        "code": "PD",
+        "desc": "Low-energy corona discharges in gas voids or paper cavities; dominated by Hydrogen (H2)."
+    },
+    "d1": {
+        "id": 2,
+        "name": "Low-Energy Discharge / Sparking (D1)",
+        "code": "D1",
+        "desc": "Dielectric breakdown, tracking, or pinhole sparking between floating metal parts; emergence of Acetylene (C2H2)."
+    },
+    "d2": {
+        "id": 3,
+        "name": "High-Energy Arcing (D2)",
+        "code": "D2",
+        "desc": "Severe power arc flashover, turn-to-turn short-circuit; violent surge of Acetylene (C2H2) and Hydrogen (H2)."
+    },
+    "t1": {
+        "id": 4,
+        "name": "Thermal Fault <300°C (T1)",
+        "code": "T1",
+        "desc": "Low-temperature localized overheating in core bolts or loose connections; dominated by Methane (CH4) and Ethane (C2H6)."
+    },
+    "t2": {
+        "id": 5,
+        "name": "Thermal Fault 300°C-700°C (T2)",
+        "code": "T2",
+        "desc": "Medium-temperature thermal fault on winding conductors; prominent Ethylene (C2H4) and Ethane (C2H6)."
+    },
+    "t3": {
+        "id": 6,
+        "name": "Thermal Fault >700°C (T3)",
+        "code": "T3",
+        "desc": "High-temperature overheating of core iron laminations and oil carbonization; heavy Ethylene (C2H4 > 50%)."
+    },
+    "cellulose": {
+        "id": 7,
+        "name": "Cellulose / Paper Degradation",
+        "code": "CELL",
+        "desc": "Pyrolysis of solid kraft paper insulation; heavy Carbon Monoxide (CO) surge with abnormal CO2/CO ratio (< 3.0)."
+    },
+    "sensor_drift": {
+        "id": 8,
+        "name": "Sensor Drift / Transducer Anomaly",
+        "code": "SENS",
+        "desc": "Isolated single-channel transducer drift without multi-gas thermodynamic correlation; instrument fault."
     }
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 48px;
-        font-weight: 600;
-        border-radius: 4px 4px 0px 0px;
-        padding-left: 16px;
-        padding-right: 16px;
-    }
-</style>
-""", unsafe_allow_html=True)
+}
 
-# ---------------------------------------------------------
-# Model & Helper Instantiation
-# ---------------------------------------------------------
-@st.cache_resource
-def load_diagnostic_model():
-    model = DGA1DCNN(num_classes=len(SCENARIOS))
-    try:
-        checkpoint = torch.load("models/dga_1dcnn.pth", map_location="cpu")
-        if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
+# ---------------------------------------------------------------------------
+# Model Initialization & Weights Loading
+# ---------------------------------------------------------------------------
+device = torch.device("cpu")
+model = None
+
+CLASS_ORDER = [
+    "normal",
+    "pd",
+    "d1",
+    "d2",
+    "t1",
+    "t2",
+    "t3",
+    "cellulose",
+    "sensor_drift"
+]
+
+CLASS_COLORS = {
+    "NORM": "#10b981",
+    "PD": "#eab308",
+    "D1": "#f97316",
+    "D2": "#e11d48",
+    "T1": "#06b6d4",
+    "T2": "#fb923c",
+    "T3": "#f43f5e",
+    "CELL": "#ec4899",
+    "SENS": "#64748b",
+}
+
+# Locate model weights checkpoint
+MODEL_CANDIDATES = [
+    "dga_1dcnn.pth",
+    os.path.join("models", "dga_1dcnn.pth"),
+    os.environ.get("MODEL_PATH", "")
+]
+
+model_path = None
+for candidate in MODEL_CANDIDATES:
+    if candidate and os.path.exists(candidate):
+        model_path = candidate
+        break
+
+try:
+    model = DGA1DCNN(num_gases=7, window_size=24, num_classes=len(SCENARIOS))
+    if model_path:
+        checkpoint = torch.load(model_path, map_location=device)
+        if "model_state_dict" in checkpoint:
             model.load_state_dict(checkpoint["model_state_dict"])
         else:
             model.load_state_dict(checkpoint)
-        model.eval()
-    except Exception as e:
-        st.warning(f"Model weights could not be loaded ({e}). Please run `python model.py` to train.")
-    return model
+        print(f"[INFO] Successfully loaded PyTorch 1D-CNN weights from: {model_path}")
+    else:
+        print("[WARN] dga_1dcnn.pth not found. Model initialized with random weights.")
+    model.to(device)
+    model.eval()
+except Exception as exc:
+    print(f"[ERROR] Error initializing 1D-CNN model: {exc}")
+    model = None
 
-model = load_diagnostic_model()
-validator = StandardsValidator()
-action_engine = ActionEngine()
 
-# Color mapping for all 7 gases
-GAS_COLORS = {
-    'H2': '#1f77b4',     # Royal Blue
-    'CH4': '#ff7f0e',    # Orange
-    'C2H6': '#2ca02c',   # Green
-    'C2H4': '#9467bd',   # Purple
-    'C2H2': '#d62728',   # Red (Critical Arcing Indicator)
-    'CO': '#17becf',     # Cyan / Teal
-    'CO2': '#8c564b',    # Brown
-    'TDCG': '#343a40'    # Dark Charcoal
-}
+# ---------------------------------------------------------------------------
+# Core Inference Function
+# ---------------------------------------------------------------------------
+def predict_dga_fault(
+    h2: float = 15.0,
+    ch4: float = 12.0,
+    c2h6: float = 8.0,
+    c2h4: float = 10.0,
+    c2h2: float = 0.1,
+    co: float = 150.0,
+    co2: float = 850.0
+) -> Tuple[Dict[str, float], Dict[str, Any]]:
+    """
+    Accepts 7 diagnostic gas readings in parts per million (ppm):
+    [H2, CH4, C2H6, C2H4, C2H2, CO, CO2]
+    
+    Returns:
+    1. label_output: Dict mapping class names to softmax probabilities (for gr.Label)
+    2. json_output: Detailed telemetry breakdown & execution metadata (for gr.JSON / API)
+    """
+    t0 = time.perf_counter()
 
-# ---------------------------------------------------------
-# Sidebar Controls & Scenario Selection
-# ---------------------------------------------------------
-st.sidebar.image("https://img.icons8.com/fluency/96/electricity.png", width=64)
-st.sidebar.title("⚡ Substation Twin")
-st.sidebar.markdown("**Asset:** `TX-400kV-BAY-03`  \n**Rating:** 500 MVA ODAF Auto-Transformer  \n**Location:** 400/220 kV Grid Substation")
+    # Form a 24-hour sequence by tile/broadcasting the 7 gases across the time window
+    raw_reading = [float(h2), float(ch4), float(c2h6), float(c2h4), float(c2h2), float(co), float(co2)]
+    sequence_data = [raw_reading] * 24
 
-st.sidebar.divider()
-st.sidebar.subheader("🕹️ Simulation Settings")
+    input_tensor = torch.tensor([sequence_data], dtype=torch.float32).to(device)
 
-sim_mode = st.sidebar.radio(
-    "Simulation Mode",
-    ["Preset Fault Scenarios", "Manual Telemetry Injection"],
-    index=0
+    if model is not None:
+        with torch.no_grad():
+            logits = model(input_tensor)
+            probs = torch.softmax(logits, dim=-1).squeeze(0).cpu().numpy()
+    else:
+        # Fallback uniform probability distribution if model failed to load
+        probs = np.ones(9) / 9.0
+
+    top_idx = int(np.argmax(probs))
+    top_scenario_key = CLASS_ORDER[top_idx]
+    top_scenario = SCENARIOS[top_scenario_key]
+    top_prob = float(probs[top_idx] * 100.0)
+
+    # 1. Output for gr.Label (dictionary of class name -> probability float)
+    label_output = {}
+    probabilities_list = []
+
+    for i, key in enumerate(CLASS_ORDER):
+        sc = SCENARIOS[key]
+        p = float(probs[i])
+        p_pct = float(p * 100.0)
+        label_output[f"{sc['code']} - {sc['name']}"] = p
+        probabilities_list.append({
+            "id": i,
+            "code": sc["code"],
+            "name": sc["name"],
+            "probability": round(p_pct, 2),
+            "isTop": (i == top_idx),
+            "color": CLASS_COLORS.get(sc["code"], "#06b6d4")
+        })
+
+    t1 = time.perf_counter()
+    exec_ms = round((t1 - t0) * 1000, 2)
+
+    # 2. Output for gr.JSON & REST API consumers
+    json_output = {
+        "predictedClassId": top_idx,
+        "classCode": top_scenario["code"],
+        "className": top_scenario["name"],
+        "confidence": round(top_prob, 1),
+        "probabilities": probabilities_list,
+        "executionTimeMs": exec_ms,
+        "source": "Hugging Face Spaces (Gradio PyTorch 1D-CNN)",
+        "predicted_class_id": top_idx,
+        "class_code": top_scenario["code"],
+        "class_name": top_scenario["name"]
+    }
+
+    return label_output, json_output
+
+
+# ---------------------------------------------------------------------------
+# Gradio Interface Definition
+# ---------------------------------------------------------------------------
+title = "⚡ Substation Power Transformer DGA Fault Diagnostic Engine"
+description = """
+**A High-Precision 1D-CNN Deep Learning Fault Classifier for High-Voltage Transformers.**
+Enter dissolved gas concentrations (ppm) or use the presets below.
+The model analyzes the 7-gas signature to diagnose incipient thermal and electrical faults in real time.
+"""
+
+article = """
+### Diagnostic Gas Legend:
+- **H₂ (Hydrogen):** Corona partial discharge, electrolysis, sparking (< 100 ppm nominal)
+- **CH₄ (Methane):** Low-to-medium thermal oil cracking (< 120 ppm nominal)
+- **C₂H₆ (Ethane):** Low-temperature oil degradation (< 65 ppm nominal)
+- **C₂H₄ (Ethylene):** High-temperature thermal overheating > 300°C (< 50 ppm nominal)
+- **C₂H₂ (Acetylene):** High-energy electrical arcing & flashover (**< 1 ppm nominal**)
+- **CO (Carbon Monoxide):** Solid Kraft paper insulation pyrolysis (< 350 ppm nominal)
+- **CO₂ (Carbon Dioxide):** Paper aging & atmospheric oxidation (< 2500 ppm nominal)
+"""
+
+# Benchmark example test cases across the 9 canonical operational states
+examples = [
+    [15.0, 12.0, 8.0, 10.0, 0.1, 150.0, 850.0],     # NORM - Normal Operation
+    [350.0, 65.0, 15.0, 1.0, 0.05, 180.0, 920.0],   # PD - Partial Discharge
+    [120.0, 35.0, 12.0, 14.0, 12.5, 200.0, 980.0],  # D1 - Low-Energy Sparking
+    [480.0, 85.0, 25.0, 95.0, 48.0, 380.0, 1150.0], # D2 - High-Energy Arcing
+    [45.0, 240.0, 95.0, 18.0, 0.2, 210.0, 1020.0],  # T1 - Thermal < 300°C
+    [65.0, 180.0, 45.0, 140.0, 1.5, 260.0, 1100.0], # T2 - Thermal 300-700°C
+    [90.0, 120.0, 30.0, 280.0, 3.8, 310.0, 1280.0], # T3 - Thermal > 700°C
+    [80.0, 45.0, 18.0, 22.0, 0.3, 750.0, 1400.0],   # CELL - Paper Degradation
+    [450.0, 12.0, 8.0, 10.0, 0.1, 150.0, 850.0],    # SENS - Sensor Glitch
+]
+
+demo = gr.Interface(
+    fn=predict_dga_fault,
+    inputs=[
+        gr.Number(label="Hydrogen (H₂) ppm", value=15.0),
+        gr.Number(label="Methane (CH₄) ppm", value=12.0),
+        gr.Number(label="Ethane (C₂H₆) ppm", value=8.0),
+        gr.Number(label="Ethylene (C₂H₄) ppm", value=10.0),
+        gr.Number(label="Acetylene (C₂H₂) ppm", value=0.1),
+        gr.Number(label="Carbon Monoxide (CO) ppm", value=150.0),
+        gr.Number(label="Carbon Dioxide (CO₂) ppm", value=850.0),
+    ],
+    outputs=[
+        gr.Label(label="Top Predicted Fault Scenario & Confidence", num_top_classes=5),
+        gr.JSON(label="Detailed 9-Class Softmax Probability Distribution & Telemetry"),
+    ],
+    title=title,
+    description=description,
+    article=article,
+    examples=examples,
+    api_name="predict"
 )
 
-scenario_keys = list(SCENARIOS.keys())
-scenario_labels = [f"{SCENARIOS[k]['code']} - {SCENARIOS[k]['name']}" for k in scenario_keys]
+# ---------------------------------------------------------------------------
+# Direct REST Route Support on Gradio's underlying FastAPI App
+# ---------------------------------------------------------------------------
+# Enables standard JSON POST requests from the Vercel React frontend
+async def rest_predict(payload: Dict[str, Any]):
+    # Extract gases from { "gases": [h2, ...], "sequence": [...] } or raw list
+    data = payload.get("data") or payload.get("gases") or payload.get("sequence") or payload
+    if isinstance(data, list) and len(data) > 0 and isinstance(data[0], list):
+        # 2D list: take latest timestep
+        reading = data[-1]
+    elif isinstance(data, list) and len(data) >= 7:
+        reading = data[:7]
+    elif isinstance(data, dict):
+        reading = [data.get(g, 0.0) for g in GAS_NAMES]
+    else:
+        reading = [15.0, 12.0, 8.0, 10.0, 0.1, 150.0, 850.0]
 
-# Initialize session state for selected scenario if not present
-if "current_scenario" not in st.session_state:
-    st.session_state.current_scenario = scenario_keys[0]
+    h2, ch4, c2h6, c2h4, c2h2, co, co2 = [float(x) for x in reading[:7]]
+    _, json_result = predict_dga_fault(h2, ch4, c2h6, c2h4, c2h2, co, co2)
+    return json_result
 
-if sim_mode == "Preset Fault Scenarios":
-    current_idx = scenario_keys.index(st.session_state.current_scenario) if st.session_state.current_scenario in scenario_keys else 0
-    selected_label = st.sidebar.selectbox(
-        "Select Fault Scenario to Simulate",
-        scenario_labels,
-        index=current_idx
-    )
-    # Update active scenario
-    selected_key = scenario_keys[scenario_labels.index(selected_label)]
-    st.session_state.current_scenario = selected_key
-    st.sidebar.info(SCENARIOS[selected_key]["desc"])
-else:
-    st.sidebar.markdown("##### 🎛️ Inject Custom Gas ppm Values")
-    custom_h2 = st.sidebar.slider("H2 (Hydrogen)", 0.0, 500.0, 35.0, 1.0)
-    custom_ch4 = st.sidebar.slider("CH4 (Methane)", 0.0, 500.0, 25.0, 1.0)
-    custom_c2h6 = st.sidebar.slider("C2H6 (Ethane)", 0.0, 250.0, 15.0, 1.0)
-    custom_c2h4 = st.sidebar.slider("C2H4 (Ethylene)", 0.0, 500.0, 30.0, 1.0)
-    custom_c2h2 = st.sidebar.slider("C2H2 (Acetylene)", 0.0, 100.0, 0.5, 0.1)
-    custom_co = st.sidebar.slider("CO (Carbon Monoxide)", 0.0, 1500.0, 200.0, 10.0)
-    custom_co2 = st.sidebar.slider("CO2 (Carbon Dioxide)", 0.0, 6000.0, 1200.0, 50.0)
+from fastapi.middleware.cors import CORSMiddleware
 
-st.sidebar.divider()
-st.sidebar.subheader("📈 Telemetry Chart Options")
-
-# Gas selection checkboxes
-visible_gases = st.sidebar.multiselect(
-    "Select Gases to Display in Graph",
-    GAS_NAMES + ['TDCG'],
-    default=GAS_NAMES
+demo.app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-y_scale = st.sidebar.radio(
-    "Y-Axis Scale",
-    ["Linear Scale", "Logarithmic Scale (Recommended for Multi-Gas)"],
-    index=0
-)
+demo.app.add_api_route("/predict", rest_predict, methods=["POST"])
+demo.app.add_api_route("/health", lambda: {"status": "online", "model": "DGA1DCNN"}, methods=["GET"])
 
-show_ieee_thresholds = st.sidebar.checkbox("Overlay IEEE 90th Threshold Lines", value=False)
-
-# ---------------------------------------------------------
-# Generate Telemetry Data
-# ---------------------------------------------------------
-if sim_mode == "Preset Fault Scenarios":
-    seq = generate_sequence(scenario_type=st.session_state.current_scenario, steps=24)
-else:
-    # Build 24-step sequence drifting up to the user-injected values
-    base_gases = np.array([custom_h2*0.2, custom_ch4*0.2, custom_c2h6*0.2, custom_c2h4*0.2, custom_c2h2*0.1, custom_co*0.4, custom_co2*0.6])
-    target = np.array([custom_h2, custom_ch4, custom_c2h6, custom_c2h4, custom_c2h2, custom_co, custom_co2])
-    seq = []
-    for step in range(24):
-        alpha = step / 23.0
-        current = base_gases * (1 - alpha) + target * alpha
-        noise = np.random.normal(0, 0.015, size=7)
-        seq.append(np.maximum(0.01, current * (1 + noise)))
-    seq = np.array(seq, dtype=np.float32)
-
-latest = seq[-1]
-gas_dict = {
-    'H2': float(latest[0]),
-    'CH4': float(latest[1]),
-    'C2H6': float(latest[2]),
-    'C2H4': float(latest[3]),
-    'C2H2': float(latest[4]),
-    'CO': float(latest[5]),
-    'CO2': float(latest[6])
-}
-
-# ---------------------------------------------------------
-# Run Analytics: Standards & AI Model Inference
-# ---------------------------------------------------------
-# 1. 1D-CNN Inference
-seq_tensor = torch.tensor(seq, dtype=torch.float32).unsqueeze(0)
-with torch.no_grad():
-    model_out = model(seq_tensor)
-    probs = torch.softmax(model_out, dim=1).numpy()[0]
-    pred_idx = int(np.argmax(probs))
-    ai_confidence = float(probs[pred_idx] * 100.0)
-
-scenario_order = list(SCENARIOS.keys())
-pred_scenario_key = scenario_order[pred_idx] if pred_idx < len(scenario_order) else "normal"
-ai_diagnosis = SCENARIOS[pred_scenario_key]["name"]
-
-# 2. Standards & Duval Triangle Validation
-ieee_status, breached_gases = validator.check_ieee_limits(gas_dict)
-tdcg_val, tdcg_status = validator.calculate_tdcg(gas_dict)
-pct_ch4, pct_c2h4, pct_c2h2, duval_zone = validator.calculate_duval_coordinates(latest[1], latest[3], latest[4])
-co_ratio, cellulose_status, paper_risk = validator.check_cellulose_degradation(latest[5], latest[6])
-
-# 3. Action Recommendations
-recommendation_key = duval_zone if duval_zone != "Normal" else ("Cellulose / Paper Degradation" if "CRITICAL" in cellulose_status else ("Sensor Drift / Transducer Anomaly" if pred_scenario_key == "sensor_drift" else "Normal"))
-rec = action_engine.get_recommendations(recommendation_key)
-
-# ---------------------------------------------------------
-# Top Header Banner
-# ---------------------------------------------------------
-st.title("⚡ Substation Digital Twin: Multi-Gas DGA Fault Diagnostic Engine")
-st.caption("AI-Powered Incipient Fault Detection (1D-CNN) & IEEE C57.104 / IEC 60599 / Duval Triangle Expert Analysis")
-
-# ---------------------------------------------------------
-# Dashboard Navigation Tabs
-# ---------------------------------------------------------
-tab_live, tab_duval, tab_matrix = st.tabs([
-    "📊 Real-Time Diagnostic Dashboard (All 7 Gases)",
-    "🔺 Interactive Duval's Triangle 1 Visualizer",
-    "📋 All Possibilities Demo Matrix & 1-Click Tour"
-])
-
-# =========================================================
-# TAB 1: Real-Time Diagnostic Dashboard
-# =========================================================
-with tab_live:
-    # Key Metric Cards
-    m1, m2, m3, m4, m5 = st.columns(5)
-    
-    is_fault = (duval_zone != "Normal") or ("CRITICAL" in ieee_status) or ("CRITICAL" in cellulose_status) or (pred_scenario_key == "sensor_drift")
-    
-    with m1:
-        if is_fault:
-            st.metric("Asset Status", "CRITICAL ALARM", delta="-42% Health Index", delta_color="inverse")
-        else:
-            st.metric("Asset Status", "HEALTHY", delta="Nominal Envelope")
-            
-    with m2:
-        status_short = "NORMAL" if "NORMAL" in ieee_status else ("CRITICAL" if "CRITICAL" in ieee_status else "CAUTION")
-        st.metric("IEEE C57.104", status_short, delta=f"{len(breached_gases)} Breaches" if breached_gases else "Within Limits", delta_color="inverse" if breached_gases else "normal")
-        
-    with m3:
-        st.metric("TDCG Level", f"{tdcg_val:.1f} ppm", delta=tdcg_status.split('(')[0].strip(), delta_color="inverse" if tdcg_val > 720 else "normal")
-        
-    with m4:
-        st.metric("Duval Triangle 1", duval_zone.split(':')[0] if ':' in duval_zone else duval_zone)
-        
-    with m5:
-        st.metric("CO₂/CO Paper Ratio", f"{co_ratio:.2f}", delta=f"Risk: {paper_risk}", delta_color="inverse" if paper_risk == "High" else "normal")
-        
-    st.divider()
-
-    # Main Visuals: Telemetry Graph & AI Diagnostics
-    left_plot, right_diag = st.columns([7, 5])
-    
-    with left_plot:
-        st.subheader("📈 Multi-Gas Telemetry Trend (Past 24 Hours)")
-        hours = [f"t-{24-i}h" for i in range(24)]
-        
-        fig = go.Figure()
-        
-        # Calculate TDCG across the sequence
-        tdcg_seq = seq[:, 0] + seq[:, 1] + seq[:, 2] + seq[:, 3] + seq[:, 4] + seq[:, 5]
-        
-        # Plot each selected gas
-        for g_idx, g_name in enumerate(GAS_NAMES):
-            if g_name in visible_gases:
-                is_c2h2 = (g_name == "C2H2")
-                fig.add_trace(go.Scatter(
-                    x=hours,
-                    y=seq[:, g_idx],
-                    mode='lines+markers' if is_c2h2 else 'lines',
-                    name=f"{g_name} (ppm)",
-                    line=dict(
-                        color=GAS_COLORS[g_name],
-                        width=3.5 if is_c2h2 else 2.2,
-                        dash='dash' if is_c2h2 else 'solid'
-                    ),
-                    marker=dict(size=6) if is_c2h2 else None,
-                    hovertemplate=f"<b>{g_name}</b>: %{{y:.2f}} ppm<extra></extra>"
-                ))
-                
-        # Optional TDCG trace
-        if 'TDCG' in visible_gases:
-            fig.add_trace(go.Scatter(
-                x=hours,
-                y=tdcg_seq,
-                mode='lines',
-                name="TDCG (Total Combustible)",
-                line=dict(color=GAS_COLORS['TDCG'], width=2.5, dash='dot'),
-                hovertemplate="<b>TDCG</b>: %{y:.1f} ppm<extra></extra>"
-            ))
-            
-        # Optional IEEE Threshold reference lines
-        if show_ieee_thresholds:
-            for g_name in visible_gases:
-                if g_name in validator.ieee_90th_limits:
-                    limit_val = validator.ieee_90th_limits[g_name]
-                    fig.add_hline(
-                        y=limit_val,
-                        line_dash="dot",
-                        line_color=GAS_COLORS.get(g_name, "gray"),
-                        annotation_text=f"IEEE {g_name} limit ({limit_val})",
-                        annotation_position="bottom right"
-                    )
-                    
-        is_log = "Logarithmic" in y_scale
-        fig.update_layout(
-            height=430,
-            margin=dict(l=20, r=20, t=30, b=20),
-            yaxis_type="log" if is_log else "linear",
-            yaxis_title="Gas Concentration (ppm - log scale)" if is_log else "Gas Concentration (ppm)",
-            xaxis_title="Timeline (24-Hour Rolling Buffer)",
-            hovermode="x unified",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Telemetry Data Table Summary
-        with st.expander("🔍 View Raw Telemetry Readings & IEEE Limits Table"):
-            df_table = []
-            for g_name in GAS_NAMES:
-                val = gas_dict[g_name]
-                lim = validator.ieee_90th_limits.get(g_name, 0.0)
-                status_txt = "⚠️ BREACH" if val > lim else "✅ NORMAL"
-                df_table.append({
-                    "Gas": g_name,
-                    "Current Concentration (ppm)": round(val, 2),
-                    "IEEE C57.104 90th Limit (ppm)": lim,
-                    "Ratio to Limit": f"{(val/lim)*100:.1f}%",
-                    "Status": status_txt
-                })
-            st.dataframe(pd.DataFrame(df_table), use_container_width=True, hide_index=True)
-
-    with right_diag:
-        st.subheader("🧠 AI & Expert Diagnostics")
-        
-        # AI Card
-        st.markdown(f"""
-        <div style="background-color: #f1f3f5; padding: 14px; border-radius: 8px; border-left: 6px solid #007bff; margin-bottom: 12px;">
-            <div style="font-size: 0.85rem; color: #6c757d; font-weight: bold;">1D-CNN TEMPORAL PATTERN RECOGNITION</div>
-            <div style="font-size: 1.35rem; font-weight: 700; color: #212529;">{ai_diagnosis}</div>
-            <div style="font-size: 0.95rem; color: #28a745; font-weight: bold;">Inference Confidence: {ai_confidence:.1f}%</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Probability Bar Chart
-        with st.expander("📊 AI Confidence Distribution (All 9 Classes)"):
-            prob_df = pd.DataFrame({
-                "Scenario": [SCENARIOS[k]["code"] for k in scenario_order],
-                "Confidence": probs * 100
-            })
-            bar_fig = go.Figure(go.Bar(
-                x=prob_df["Confidence"],
-                y=prob_df["Scenario"],
-                orientation='h',
-                marker_color=['#007bff' if i == pred_idx else '#adb5bd' for i in range(len(scenario_order))]
-            ))
-            bar_fig.update_layout(
-                height=260,
-                margin=dict(l=10, r=10, t=10, b=10),
-                xaxis_title="Confidence (%)",
-                yaxis_autorange="reversed"
-            )
-            st.plotly_chart(bar_fig, use_container_width=True)
-
-        # Action Engine Recommendations
-        st.markdown(f"##### 🛡️ Substation Mitigation Protocol")
-        st.markdown(f"**Severity Level:** `{rec['severity']}`")
-        for i, act in enumerate(rec['actions'], 1):
-            st.markdown(f"**{i}.** {act}")
-            
-        # Paper Insulation Diagnosis
-        if "CRITICAL" in cellulose_status or "ELEVATED" in cellulose_status:
-            st.warning(f"**Paper Insulation Alert:** {cellulose_status}")
-        else:
-            st.success(f"**Solid Insulation Health:** {cellulose_status}")
-
-# =========================================================
-# TAB 2: Interactive Duval Triangle 1 Visualizer
-# =========================================================
-with tab_duval:
-    st.subheader("🔺 Duval Triangle 1 Coordinate Mapping (IEC 60599 / IEEE C57.104)")
-    st.markdown("""
-    Duval's Triangle 1 is an internationally recognized graphical method that correlates the relative percentages of 
-    three critical hydrocarbon gases generated during mineral oil breakdown:
-    $$\\%CH_4 + \\%C_2H_4 + \\%C_2H_2 = 100\\%$$
-    """)
-    
-    col_tri, col_info = st.columns([7, 5])
-    
-    with col_tri:
-        # Build Plotly Ternary Diagram
-        fig_tri = go.Figure()
-        
-        # Centroid approximate zone annotations
-        zone_centroids = [
-            {"name": "PD (Partial Discharge)", "a": 97, "b": 1.5, "c": 1.5, "color": "#17a2b8"},
-            {"name": "T1 (<300°C)", "a": 80, "b": 18, "c": 2, "color": "#20c997"},
-            {"name": "T2 (300°-700°C)", "a": 60, "b": 38, "c": 2, "color": "#fd7e14"},
-            {"name": "T3 (>700°C)", "a": 25, "b": 70, "c": 5, "color": "#e83e8c"},
-            {"name": "D1 (Sparking)", "a": 70, "b": 12, "c": 18, "color": "#6f42c1"},
-            {"name": "D2 (Arcing)", "a": 25, "b": 35, "c": 40, "color": "#dc3545"}
-        ]
-        
-        for z in zone_centroids:
-            fig_tri.add_trace(go.Scatterternary(
-                a=[z["a"]],
-                b=[z["b"]],
-                c=[z["c"]],
-                mode='markers+text',
-                text=[z["name"].split(' ')[0]],
-                textposition='bottom center',
-                name=z["name"],
-                marker=dict(symbol='circle', size=14, color=z["color"], opacity=0.7)
-            ))
-            
-        # Add the active sample point
-        fig_tri.add_trace(go.Scatterternary(
-            a=[pct_ch4],
-            b=[pct_c2h4],
-            c=[pct_c2h2],
-            mode='markers+text',
-            text=["📍 OPERATING POINT"],
-            textposition='top center',
-            textfont=dict(size=14, color='black', family='Arial Black'),
-            name="Current Oil Telemetry",
-            marker=dict(
-                symbol='star',
-                size=22,
-                color='#ff0000',
-                line=dict(width=2, color='black')
-            )
-        ))
-        
-        fig_tri.update_layout(
-            ternary=dict(
-                sum=100,
-                aaxis=dict(title='%CH4 (Methane)', min=0.01, linewidth=2, ticks='outside'),
-                baxis=dict(title='%C2H4 (Ethylene)', min=0.01, linewidth=2, ticks='outside'),
-                caxis=dict(title='%C2H2 (Acetylene)', min=0.01, linewidth=2, ticks='outside')
-            ),
-            height=500,
-            margin=dict(l=30, r=30, t=30, b=30),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
-        )
-        st.plotly_chart(fig_tri, use_container_width=True)
-        
-    with col_info:
-        st.markdown("#### Current Coordinate Analysis")
-        st.markdown(f"- **%CH₄:** `{pct_ch4:.2f}%`")
-        st.markdown(f"- **%C₂H₄:** `{pct_c2h4:.2f}%`")
-        st.markdown(f"- **%C₂H₂:** `{pct_c2h2:.2f}%`")
-        st.markdown(f"- **Evaluated Duval Zone:** `{duval_zone}`")
-        
-        st.divider()
-        st.markdown("#### Duval Zone Boundary Reference")
-        st.markdown("""
-        | Zone | Meaning | Primary Gas Mechanism |
-        |---|---|---|
-        | **PD** | Partial Discharge | Corona ionization in oil bubbles (%CH4 ≥ 98%) |
-        | **D1** | Low-Energy Discharge | Sparking, carbonized tracking (%C2H2 ≥ 13%, %C2H4 < 23%) |
-        | **D2** | High-Energy Discharge | Power arcing flashover (%C2H2 ≥ 29%) |
-        | **T1** | Thermal Fault < 300°C | Core hotspot, loose bolts (%C2H4 < 20%, %C2H2 < 4%) |
-        | **T2** | Thermal Fault 300°-700°C | Overheated conductors (20% ≤ %C2H4 < 50%) |
-        | **T3** | Thermal Fault > 700°C | Severe oil carbonization (%C2H4 ≥ 50%) |
-        """)
-
-# =========================================================
-# TAB 3: All Possibilities Demo Matrix & 1-Click Tour
-# =========================================================
-with tab_matrix:
-    st.subheader("📋 Comprehensive Substation Fault Possibilities Matrix")
-    st.markdown("""
-    This interactive demonstration matrix displays **every possible fault condition** that can occur in gas-monitored substation assets.
-    Click **'Load Scenario'** on any row to immediately simulate that telemetry condition, observe the AI diagnosis, and verify standards compliance.
-    """)
-    
-    matrix_data = [
-        {
-            "key": "normal",
-            "name": "Normal Operation (Healthy)",
-            "signature": "Low baseline (all < IEEE 90th limits)",
-            "duval": "Normal",
-            "ieee": "Condition 1 (Normal)",
-            "ai": "Normal Operation",
-            "action": "Routine 24h continuous telemetry"
-        },
-        {
-            "key": "pd",
-            "name": "Partial Discharge (PD)",
-            "signature": "H2 spike (150-320 ppm), low CH4, C2H2 ≈ 0",
-            "duval": "PD: Partial Discharge",
-            "ieee": "Condition 2 (Caution - H2)",
-            "ai": "Partial Discharge (PD)",
-            "action": "UHF / Acoustic PD scanning, verify bushings"
-        },
-        {
-            "key": "d1",
-            "name": "Low-Energy Sparking (D1)",
-            "signature": "C2H2 emergence (6-15 ppm), H2 rise, C2H4 low",
-            "duval": "D1: Low-Energy Discharge",
-            "ieee": "Condition 3 (Critical - C2H2)",
-            "ai": "Low-Energy Discharge / Sparking",
-            "action": "15-min scan cycle, OLTC inspection"
-        },
-        {
-            "key": "d2",
-            "name": "High-Energy Arcing (D2)",
-            "signature": "Violent C2H2 surge (>30 ppm), H2, C2H4",
-            "duval": "D2: High-Energy Discharge",
-            "ieee": "Condition 3 (Critical - C2H2/H2)",
-            "ai": "High-Energy Arcing (D2)",
-            "action": "Immediate load curtailment, trip interlock"
-        },
-        {
-            "key": "t1",
-            "name": "Thermal Fault <300°C (T1)",
-            "signature": "CH4 and C2H6 surge, C2H4 < 20%",
-            "duval": "T1: Thermal Fault (<300°C)",
-            "ieee": "Condition 2 (Caution - CH4/C2H6)",
-            "ai": "Thermal Fault <300°C (T1)",
-            "action": "Inspect core ground straps and connections"
-        },
-        {
-            "key": "t2",
-            "name": "Thermal Fault 300°-700°C (T2)",
-            "signature": "C2H4 (60-150 ppm) & C2H6 elevated",
-            "duval": "T2: Thermal Fault (300°-700°C)",
-            "ieee": "Condition 2/3 (Caution/Critical - C2H4)",
-            "ai": "Thermal Fault 300°C-700°C (T2)",
-            "action": "Inspect radiator fans/pumps, check winding temp"
-        },
-        {
-            "key": "t3",
-            "name": "Thermal Fault >700°C (T3)",
-            "signature": "Dominant C2H4 (>200 ppm, >50% Duval)",
-            "duval": "T3: Thermal Fault (>700°C)",
-            "ieee": "Condition 3 (Critical - C2H4)",
-            "ai": "Thermal Fault >700°C (T3)",
-            "action": "FLIR thermography, avoid peak overloading"
-        },
-        {
-            "key": "cellulose",
-            "name": "Cellulose / Paper Degradation",
-            "signature": "Excessive CO (600-1400 ppm), CO2/CO < 3.0",
-            "duval": "T1/T2 or Normal",
-            "ieee": "Condition 3 (Critical - CO)",
-            "ai": "Cellulose / Paper Degradation",
-            "action": "Furan (2-FAL) HPLC testing, DP assessment"
-        },
-        {
-            "key": "sensor_drift",
-            "name": "Sensor Drift / Transducer Fault",
-            "signature": "Isolated erratic H2 jump, 0 hydrocarbon rise",
-            "duval": "Normal",
-            "ieee": "Condition 2 (Caution - H2)",
-            "ai": "Sensor Drift / Transducer Anomaly",
-            "action": "Calibrate PAS optical cell, verify zero-span"
-        }
-    ]
-    
-    for row in matrix_data:
-        c_name, c_sig, c_duval, c_ieee, c_btn = st.columns([3, 3, 2, 2, 2])
-        with c_name:
-            st.markdown(f"**{row['name']}**")
-        with c_sig:
-            st.caption(row["signature"])
-        with c_duval:
-            st.markdown(f"`{row['duval'].split(':')[0]}`")
-        with c_ieee:
-            st.markdown(f"`{row['ieee'].split(' ')[0]}`")
-        with c_btn:
-            if st.button(f"Load Scenario", key=f"btn_load_{row['key']}"):
-                st.session_state.current_scenario = row["key"]
-                st.rerun()
-        st.markdown("<hr style='margin: 4px 0px; border-color: #e9ecef;'>", unsafe_allow_html=True)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 7860))  # Standard port for Hugging Face Spaces
+    demo.launch(server_name="0.0.0.0", server_port=port, share=False)

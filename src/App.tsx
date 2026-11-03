@@ -19,7 +19,7 @@ import {
   generateCustomSequence,
   TelemetryPoint,
 } from './engine/scenarioPresets';
-import { predict1DCNN, DiagnosticInference } from './engine/cnnInference';
+import { predict1DCNN, predictFallbackInference, DiagnosticInference } from './engine/cnnInference';
 import { getActionProtocol } from './engine/actionProtocol';
 
 export const App: React.FC = () => {
@@ -89,14 +89,37 @@ export const App: React.FC = () => {
   }, [fullSequence, playbackHour]);
 
   // --- Real-Time Analytics & Decision Fusion (< 16ms) ---
-  // 1. AI 1D-CNN Inference
-  const cnnInference: DiagnosticInference = useMemo(() => {
+  // 1. AI 1D-CNN Inference (Decoupled Hugging Face Space Gradio API with instant local fallback)
+  const [cnnInference, setCnnInference] = useState<DiagnosticInference>(() =>
+    predictFallbackInference(fullSequence.slice(0, 24))
+  );
+
+  useEffect(() => {
+    let isMounted = true;
     const seqSlice: GasReadings[] = [];
     for (let i = 0; i < 24; i++) {
       const idx = Math.min(i, playbackHour);
       seqSlice.push(fullSequence[idx]);
     }
-    return predict1DCNN(seqSlice);
+
+    // Instantly update with local heuristic for 60 FPS slider reactivity
+    const heuristic = predictFallbackInference(seqSlice);
+    setCnnInference(heuristic);
+
+    // Concurrently fetch deep learning inference from Hugging Face Space Gradio API
+    predict1DCNN(seqSlice)
+      .then((res) => {
+        if (isMounted) {
+          setCnnInference(res);
+        }
+      })
+      .catch((err) => {
+        console.warn('HF Gradio API query error:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [fullSequence, playbackHour]);
 
   // 2. Standards Validation

@@ -1,0 +1,21 @@
+# Exclude Python backend and model binaries from Vercel deployment bundle
+models/
+public/models/
+api/
+app.py
+model.py
+generate_data.py
+export_onnx.py
+validator.py
+action_engine.py
+demo_all_possibilities.py
+dga_1dcnn.pth
+requirements.txt
+*.pth
+*.onnx
+*.onnx.data
+*.wasm
+__pycache__/
+*.pyc
+.env
+.env.local

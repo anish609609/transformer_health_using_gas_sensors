@@ -3,10 +3,16 @@ import torch.nn as nn
 import torch.optim as optim
 import os
 import json
-from generate_data import build_dataset, SCENARIOS
+try:
+    from generate_data import build_dataset, SCENARIOS
+    DEFAULT_NUM_CLASSES = len(SCENARIOS)
+except ImportError:
+    build_dataset = None
+    SCENARIOS = {}
+    DEFAULT_NUM_CLASSES = 9
 
 class DGA1DCNN(nn.Module):
-    def __init__(self, num_gases=7, window_size=24, num_classes=len(SCENARIOS)):
+    def __init__(self, num_gases=7, window_size=24, num_classes=DEFAULT_NUM_CLASSES):
         super(DGA1DCNN, self).__init__()
         self.num_classes = num_classes
         
