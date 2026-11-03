@@ -86,23 +86,23 @@ export const TelemetryChart24h: React.FC<TelemetryChart24hProps> = ({
   return (
     <div className="bg-scada-card border border-scada-border rounded-xl p-3.5 flex flex-col justify-between shadow-lg h-full">
       {/* Header & Scale Toggles */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          <LineChartIcon className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-xs font-mono font-bold tracking-wider uppercase text-slate-200">
+          <LineChartIcon className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+          <h3 className="text-xs font-mono font-bold tracking-wider uppercase text-slate-800 dark:text-slate-200">
             24-Hour Multi-Gas Telemetry Waveform Trend &bull; Rate-of-Rise
           </h3>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Linear vs Log Toggle */}
-          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5">
+          <div className="flex items-center bg-slate-100 border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg p-0.5">
             <button
               onClick={() => setIsLogScale(false)}
               className={`px-2 py-0.5 rounded text-xs font-mono transition ${
                 !isLogScale
-                  ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-cyan-100 text-cyan-800 font-bold border border-cyan-300 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/40'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               Linear
@@ -111,8 +111,8 @@ export const TelemetryChart24h: React.FC<TelemetryChart24hProps> = ({
               onClick={() => setIsLogScale(true)}
               className={`px-2 py-0.5 rounded text-xs font-mono transition ${
                 isLogScale
-                  ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-cyan-100 text-cyan-800 font-bold border border-cyan-300 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/40'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               Log₁₀ Scale
@@ -124,8 +124,8 @@ export const TelemetryChart24h: React.FC<TelemetryChart24hProps> = ({
             onClick={() => setShowIEEEThresholds(!showIEEEThresholds)}
             className={`px-2 py-1 rounded text-xs font-mono border transition ${
               showIEEEThresholds
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/40'
+                : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
             IEEE Limits
@@ -146,13 +146,13 @@ export const TelemetryChart24h: React.FC<TelemetryChart24hProps> = ({
               onClick={() => toggleGas(gas)}
               className={`px-2 py-0.5 rounded-full border transition flex items-center gap-1 text-[11px] ${
                 isVisible
-                  ? 'bg-slate-800/90 text-white border-slate-700'
-                  : 'bg-slate-950/40 text-slate-600 border-slate-800/60 line-through'
+                  ? 'bg-white text-slate-800 border-slate-300 shadow-sm dark:bg-slate-800/90 dark:text-white dark:border-slate-700'
+                  : 'bg-slate-100 text-slate-400 border-slate-200 line-through dark:bg-slate-950/40 dark:text-slate-600 dark:border-slate-800/60'
               }`}
             >
               <span
                 className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: isVisible ? meta.color : '#475569' }}
+                style={{ backgroundColor: isVisible ? meta.color : '#94a3b8' }}
               />
               <span>{meta.chemical}</span>
             </button>
@@ -164,8 +164,8 @@ export const TelemetryChart24h: React.FC<TelemetryChart24hProps> = ({
           onClick={() => setShowTDCG(!showTDCG)}
           className={`px-2 py-0.5 rounded-full border transition flex items-center gap-1 text-[11px] ${
             showTDCG
-              ? 'bg-slate-800/90 text-slate-200 border-slate-700'
-              : 'bg-slate-950/40 text-slate-600 border-slate-800/60 line-through'
+              ? 'bg-white text-slate-800 border-slate-300 shadow-sm dark:bg-slate-800/90 dark:text-slate-200 dark:border-slate-700'
+              : 'bg-slate-100 text-slate-400 border-slate-200 line-through dark:bg-slate-950/40 dark:text-slate-600 dark:border-slate-800/60'
           }`}
         >
           <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
@@ -173,11 +173,11 @@ export const TelemetryChart24h: React.FC<TelemetryChart24hProps> = ({
         </button>
 
         <div className="ml-auto flex items-center gap-1 text-[10px] text-slate-500">
-          <button onClick={() => setAllGases(true)} className="hover:text-cyan-400">
+          <button onClick={() => setAllGases(true)} className="hover:text-cyan-600 dark:hover:text-cyan-400">
             [All]
           </button>
           <span>/</span>
-          <button onClick={() => setAllGases(false)} className="hover:text-cyan-400">
+          <button onClick={() => setAllGases(false)} className="hover:text-cyan-600 dark:hover:text-cyan-400">
             [None]
           </button>
         </div>
@@ -187,7 +187,7 @@ export const TelemetryChart24h: React.FC<TelemetryChart24hProps> = ({
       <div className="w-full h-48 sm:h-52">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 10, right: 15, left: -15, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.6} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid, #1e293b)" opacity={0.6} />
 
             <XAxis
               dataKey="hourLabel"
@@ -211,8 +211,8 @@ export const TelemetryChart24h: React.FC<TelemetryChart24hProps> = ({
               content={({ active, payload, label }) => {
                 if (!active || !payload || !payload.length) return null;
                 return (
-                  <div className="bg-slate-950/95 border border-slate-700/80 rounded-lg p-2.5 shadow-2xl backdrop-blur-md font-mono text-xs z-50">
-                    <div className="text-cyan-400 font-bold mb-1.5 border-b border-slate-800 pb-1">
+                  <div className="bg-white/95 border border-slate-200 dark:bg-slate-950/95 dark:border-slate-700/80 rounded-lg p-2.5 shadow-2xl backdrop-blur-md font-mono text-xs z-50 text-slate-800 dark:text-slate-200">
+                    <div className="text-cyan-700 dark:text-cyan-400 font-bold mb-1.5 border-b border-slate-200 dark:border-slate-800 pb-1">
                       Timeline: {label}
                     </div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -221,11 +221,11 @@ export const TelemetryChart24h: React.FC<TelemetryChart24hProps> = ({
                         const raw = entry.payload[`${gas}_raw`];
                         return (
                           <div key={gas} className="flex items-center justify-between gap-2">
-                            <span className="flex items-center gap-1" style={{ color: entry.color }}>
+                            <span className="flex items-center gap-1 font-semibold" style={{ color: entry.color }}>
                               <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: entry.color }} />
                               {gas}:
                             </span>
-                            <span className="font-bold text-white">
+                            <span className="font-bold text-slate-900 dark:text-white">
                               {raw !== undefined ? Number(raw).toFixed(gas === 'C2H2' ? 1 : 0) : ''} ppm
                             </span>
                           </div>

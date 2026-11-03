@@ -34,24 +34,24 @@ export const CnnConfidenceCard: React.FC<CnnConfidenceCardProps> = ({
           </div>
 
           {/* Consolidated Top Classification Row */}
-          <div className="mt-2 bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-cyan-950/30 border border-slate-800 rounded-lg px-3 py-2 flex items-center justify-between">
+          <div className="mt-2 bg-slate-100/90 border border-slate-200 dark:bg-gradient-to-r dark:from-slate-900/90 dark:via-slate-900/60 dark:to-cyan-950/30 dark:border-slate-800 rounded-lg px-3 py-2 flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0">
+              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-cyan-100 text-cyan-800 border border-cyan-300 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/40 shrink-0">
                 {inference.classCode}
               </span>
-              <span className="text-xs sm:text-sm font-bold text-white truncate font-sans">
+              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate font-sans">
                 {inference.className}
               </span>
             </div>
 
             <div className="flex items-center gap-2.5 shrink-0 font-mono">
               <div className="text-right">
-                <span className="text-[10px] text-slate-400 block leading-tight">Confidence</span>
-                <span className="text-sm sm:text-base font-bold text-emerald-400 leading-tight">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight">Confidence</span>
+                <span className="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400 leading-tight">
                   {inference.confidence.toFixed(1)}%
                 </span>
               </div>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400">
                 {inference.executionTimeMs}ms
               </span>
             </div>
@@ -59,15 +59,15 @@ export const CnnConfidenceCard: React.FC<CnnConfidenceCardProps> = ({
         </div>
 
         {/* 9-Class Probability Bar Distribution (Continuous Horizontal Bar Graph) */}
-        <div className="my-1.5 space-y-1 font-mono">
+        <div className="my-1 space-y-1 font-mono">
           {inference.probabilities.map((item: CnnClassProbability) => (
             <div key={item.id} className="flex items-center gap-2 text-xs">
-              <span className={`w-11 font-bold shrink-0 text-[11px] ${item.isTop ? 'text-white' : 'text-slate-400'}`}>
+              <span className={`w-11 font-bold shrink-0 text-[11px] ${item.isTop ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
                 {item.code}
               </span>
 
               {/* Progress Bar Container */}
-              <div className="flex-1 h-3 bg-slate-900/90 rounded border border-slate-800/80 overflow-hidden relative">
+              <div className="flex-1 h-2.5 bg-slate-100 dark:bg-slate-900/90 rounded border border-slate-200 dark:border-slate-800/80 overflow-hidden relative">
                 <div
                   className="h-full rounded transition-all duration-300"
                   style={{
@@ -79,7 +79,7 @@ export const CnnConfidenceCard: React.FC<CnnConfidenceCardProps> = ({
               </div>
 
               {/* Value at the end */}
-              <span className={`w-12 text-right shrink-0 text-xs font-bold ${item.isTop ? 'text-cyan-300' : 'text-slate-500'}`}>
+              <span className={`w-12 text-right shrink-0 text-xs font-bold ${item.isTop ? 'text-cyan-600 dark:text-cyan-300' : 'text-slate-400 dark:text-slate-500'}`}>
                 {item.probability.toFixed(1)}%
               </span>
             </div>

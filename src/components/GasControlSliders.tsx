@@ -92,10 +92,10 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
               key={gasKey}
               className={`p-2 rounded-lg border transition-all ${
                 isCriticalC2H2
-                  ? 'bg-rose-950/20 border-rose-500/50'
+                  ? 'bg-rose-50 border-rose-300 dark:bg-rose-950/20 dark:border-rose-500/50'
                   : isBreached
-                  ? 'bg-amber-950/15 border-amber-500/40'
-                  : 'bg-slate-900/60 border-slate-800/80 hover:border-slate-700'
+                  ? 'bg-amber-50 border-amber-300 dark:bg-amber-950/15 dark:border-amber-500/40'
+                  : 'bg-white border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700'
               }`}
             >
               {/* Gas Label & Value Header */}
@@ -105,10 +105,10 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: meta.color }}
                   />
-                  <span className="font-mono font-bold text-xs text-white">
+                  <span className="font-mono font-bold text-xs text-slate-900 dark:text-white">
                     {meta.chemical}
                   </span>
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
                     {meta.name}
                   </span>
                 </div>
@@ -118,10 +118,10 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
                   <span
                     className={`text-[10px] font-mono px-1 rounded ${
                       rate > 5
-                        ? 'text-rose-400 bg-rose-950/50'
+                        ? 'text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-950/50'
                         : rate > 1
-                        ? 'text-amber-400 bg-amber-950/50'
-                        : 'text-slate-500'
+                        ? 'text-amber-700 bg-amber-100 dark:text-amber-400 dark:bg-amber-950/50'
+                        : 'text-slate-500 dark:text-slate-500'
                     }`}
                     title="24-hour rate of generation"
                   >
@@ -132,10 +132,10 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
                   <span
                     className={`font-mono text-xs font-bold ${
                       isCriticalC2H2
-                        ? 'text-rose-400'
+                        ? 'text-rose-600 dark:text-rose-400'
                         : isBreached
-                        ? 'text-amber-400'
-                        : 'text-cyan-400'
+                        ? 'text-amber-700 dark:text-amber-400'
+                        : 'text-cyan-600 dark:text-cyan-400'
                     }`}
                   >
                     {val.toFixed(gasKey === 'C2H2' ? 1 : 0)}{' '}
@@ -153,9 +153,9 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
                   step={range.step}
                   value={val}
                   onChange={(e) => onChangeGas(gasKey, parseFloat(e.target.value))}
-                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400 hover:accent-cyan-300 transition"
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500 hover:accent-cyan-400 transition"
                   style={{
-                    background: `linear-gradient(to right, ${meta.color} 0%, ${meta.color} ${pctFill}%, #1e293b ${pctFill}%, #1e293b 100%)`,
+                    background: `linear-gradient(to right, ${meta.color} 0%, ${meta.color} ${pctFill}%, var(--slider-track, #1e293b) ${pctFill}%, var(--slider-track, #1e293b) 100%)`,
                   }}
                 />
               </div>
@@ -164,7 +164,7 @@ export const GasControlSliders: React.FC<GasControlSlidersProps> = ({
               <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono mt-1">
                 <div className="flex items-center gap-1">
                   <span>IEEE 90th:</span>
-                  <span className={isBreached ? 'text-amber-400 font-semibold' : 'text-slate-400'}>
+                  <span className={isBreached ? 'text-amber-700 dark:text-amber-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}>
                     {meta.limit} ppm
                   </span>
                 </div>

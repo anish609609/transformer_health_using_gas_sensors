@@ -55,45 +55,44 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
   return (
     <div className="bg-scada-card border border-scada-border rounded-xl p-3.5 flex flex-col justify-between shadow-lg h-full">
       {/* Header with Integrated Compact Axis Colors & Zone Badge */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          <Triangle className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-xs font-mono font-bold tracking-wider uppercase text-slate-200">
+          <Triangle className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+          <h3 className="text-xs font-mono font-bold tracking-wider uppercase text-slate-800 dark:text-slate-200">
             Duval Triangle 1 &bull; Diagnostic Zones
           </h3>
         </div>
 
-        <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-300">
+        <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-cyan-100 text-cyan-800 border border-cyan-300 dark:bg-slate-900 dark:border-slate-700 dark:text-cyan-300">
           Zone: {currentDuval.zoneCode}
         </span>
       </div>
 
       {/* Streamlined Single-Line Axis Color Legend */}
-      <div className="flex items-center justify-between px-2.5 py-1 rounded bg-slate-900/70 border border-slate-800 text-[11px] font-mono flex-wrap gap-2">
+      <div className="flex items-center justify-between px-2.5 py-1 rounded bg-slate-100/90 border border-slate-200 text-slate-700 dark:bg-slate-900/70 dark:border-slate-800 dark:text-slate-300 text-[11px] font-mono flex-wrap gap-2">
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 text-orange-400 font-semibold">
-            <span className="w-2.5 h-1 bg-orange-400 rounded-full" /> %CH₄
+          <span className="flex items-center gap-1 text-orange-600 dark:text-orange-400 font-semibold">
+            <span className="w-2.5 h-1 bg-orange-500 rounded-full" /> %CH₄
           </span>
-          <span className="flex items-center gap-1 text-purple-400 font-semibold">
-            <span className="w-2.5 h-1 bg-purple-400 rounded-full" /> %C₂H₄
+          <span className="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-semibold">
+            <span className="w-2.5 h-1 bg-purple-500 rounded-full" /> %C₂H₄
           </span>
-          <span className="flex items-center gap-1 text-rose-400 font-semibold">
-            <span className="w-2.5 h-1 bg-rose-400 rounded-full" /> %C₂H₂
+          <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-semibold">
+            <span className="w-2.5 h-1 bg-rose-500 rounded-full" /> %C₂H₂
           </span>
         </div>
-        <div className="text-slate-400 text-[10px]">
-          Classification: <strong className="text-white">{currentDuval.zone}</strong>
+        <div className="text-slate-600 dark:text-slate-400 text-[10px]">
+          Classification: <strong className="text-slate-900 dark:text-white">{currentDuval.zone}</strong>
         </div>
       </div>
 
       {/* High-Clarity Scaled SVG Canvas */}
-      <div className="w-full flex items-center justify-center bg-slate-950/80 rounded-lg border border-slate-800 p-1.5 overflow-hidden">
+      <div className="w-full flex items-center justify-center bg-slate-50 dark:bg-slate-950/80 rounded-lg border border-slate-200 dark:border-slate-800 p-1.5 overflow-hidden">
         <svg viewBox="0 0 540 350" className="w-full max-w-[440px] select-none" xmlns="http://www.w3.org/2000/svg">
           {/* Base Triangle Background */}
           <polygon
             points={`${topV.x},${topV.y} ${leftV.x},${leftV.y} ${rightV.x},${rightV.y}`}
-            fill="#090d16"
-            stroke="#1e293b"
+            className="fill-white stroke-slate-300 dark:fill-[#090d16] dark:stroke-[#1e293b]"
             strokeWidth="1"
           />
 
@@ -130,17 +129,17 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
                 <line
                   x1={ch4Left.x} y1={ch4Left.y}
                   x2={ch4Right.x} y2={ch4Right.y}
-                  stroke="#fb923c" strokeWidth="0.7" strokeDasharray="3 3" strokeOpacity="0.2"
+                  stroke="#fb923c" strokeWidth="0.7" strokeDasharray="3 3" strokeOpacity="0.3"
                 />
                 <line
                   x1={c2h4Left.x} y1={c2h4Left.y}
                   x2={c2h4Bottom.x} y2={c2h4Bottom.y}
-                  stroke="#c084fc" strokeWidth="0.7" strokeDasharray="3 3" strokeOpacity="0.2"
+                  stroke="#c084fc" strokeWidth="0.7" strokeDasharray="3 3" strokeOpacity="0.3"
                 />
                 <line
                   x1={c2h2Bottom.x} y1={c2h2Bottom.y}
                   x2={c2h2Right.x} y2={c2h2Right.y}
-                  stroke="#f43f5e" strokeWidth="0.7" strokeDasharray="3 3" strokeOpacity="0.2"
+                  stroke="#f43f5e" strokeWidth="0.7" strokeDasharray="3 3" strokeOpacity="0.3"
                 />
               </g>
             );
@@ -152,11 +151,9 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
               key={`label-${zone.code}`}
               x={zone.centroid.x}
               y={zone.centroid.y}
-              fill="#ffffff"
-              fillOpacity={currentDuval.zoneCode === zone.code ? 1 : 0.7}
-              fontSize={zone.code === 'PD' ? '8' : '10'}
-              fontFamily="monospace"
-              fontWeight="bold"
+              className="fill-slate-900 dark:fill-white font-mono font-bold"
+              fillOpacity={currentDuval.zoneCode === zone.code ? 1 : 0.85}
+              fontSize={zone.code === 'PD' ? '8.5' : '10'}
               textAnchor="middle"
               dominantBaseline="central"
               pointerEvents="none"
@@ -169,7 +166,8 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
           <line
             x1={topV.x} y1={topV.y}
             x2={leftV.x} y2={leftV.y}
-            stroke="#c084fc" strokeWidth="2.5" strokeLinecap="round"
+            stroke="#9333ea" strokeWidth="2.5" strokeLinecap="round"
+            className="stroke-purple-600 dark:stroke-purple-400"
           />
 
           {/* Left Edge Minor Ticks */}
@@ -182,7 +180,8 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
                 key={`c2h4-minor-${p}`}
                 x1={px} y1={py}
                 x2={px - 4 * 0.860} y2={py - 4 * 0.510}
-                stroke="#c084fc" strokeWidth="1" strokeOpacity="0.6"
+                stroke="#9333ea" strokeWidth="1" strokeOpacity="0.6"
+                className="stroke-purple-600 dark:stroke-purple-400"
               />
             );
           })}
@@ -198,10 +197,11 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
             const ly = py - 12 * 0.510;
             return (
               <g key={`c2h4-${p}`}>
-                <line x1={px} y1={py} x2={tx} y2={ty} stroke="#c084fc" strokeWidth="1.5" />
+                <line x1={px} y1={py} x2={tx} y2={ty} stroke="#9333ea" strokeWidth="1.5" className="stroke-purple-600 dark:stroke-purple-400" />
                 <text
                   x={lx} y={ly}
-                  fill="#c084fc"
+                  fill="#7c3aed"
+                  className="fill-purple-700 dark:fill-purple-400"
                   fontSize="9.5"
                   fontFamily="monospace"
                   fontWeight="600"
@@ -218,7 +218,8 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
           <text
             x={125} y={150}
             transform="rotate(-59.4 125 150)"
-            fill="#c084fc"
+            fill="#7c3aed"
+            className="fill-purple-700 dark:fill-purple-400"
             fontSize="10"
             fontFamily="monospace"
             fontWeight="bold"
@@ -231,7 +232,8 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
           <line
             x1={leftV.x} y1={leftV.y}
             x2={rightV.x} y2={rightV.y}
-            stroke="#f43f5e" strokeWidth="2.5" strokeLinecap="round"
+            stroke="#e11d48" strokeWidth="2.5" strokeLinecap="round"
+            className="stroke-rose-600 dark:stroke-rose-400"
           />
 
           {/* Bottom Edge Minor Ticks */}
@@ -243,7 +245,8 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
                 key={`c2h2-minor-${p}`}
                 x1={px} y1={300}
                 x2={px} y2={304}
-                stroke="#f43f5e" strokeWidth="1" strokeOpacity="0.6"
+                stroke="#e11d48" strokeWidth="1" strokeOpacity="0.6"
+                className="stroke-rose-600 dark:stroke-rose-400"
               />
             );
           })}
@@ -254,10 +257,11 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
             const px = (1 - f) * leftV.x + f * rightV.x;
             return (
               <g key={`c2h2-${p}`}>
-                <line x1={px} y1={300} x2={px} y2={306} stroke="#f43f5e" strokeWidth="1.5" />
+                <line x1={px} y1={300} x2={px} y2={306} stroke="#e11d48" strokeWidth="1.5" className="stroke-rose-600 dark:stroke-rose-400" />
                 <text
                   x={px} y={316}
-                  fill="#f43f5e"
+                  fill="#e11d48"
+                  className="fill-rose-700 dark:fill-rose-400"
                   fontSize="9.5"
                   fontFamily="monospace"
                   fontWeight="600"
@@ -273,7 +277,8 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
           {/* Bottom Axis Label */}
           <text
             x={270} y={338}
-            fill="#f43f5e"
+            fill="#e11d48"
+            className="fill-rose-700 dark:fill-rose-400"
             fontSize="10"
             fontFamily="monospace"
             fontWeight="bold"
@@ -286,7 +291,8 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
           <line
             x1={rightV.x} y1={rightV.y}
             x2={topV.x} y2={topV.y}
-            stroke="#fb923c" strokeWidth="2.5" strokeLinecap="round"
+            stroke="#ea580c" strokeWidth="2.5" strokeLinecap="round"
+            className="stroke-orange-500 dark:stroke-orange-400"
           />
 
           {/* Right Edge Minor Ticks */}
@@ -299,7 +305,8 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
                 key={`ch4-minor-${p}`}
                 x1={px} y1={py}
                 x2={px + 4 * 0.860} y2={py - 4 * 0.510}
-                stroke="#fb923c" strokeWidth="1" strokeOpacity="0.6"
+                stroke="#ea580c" strokeWidth="1" strokeOpacity="0.6"
+                className="stroke-orange-500 dark:stroke-orange-400"
               />
             );
           })}
@@ -315,10 +322,11 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
             const ly = py - 12 * 0.510;
             return (
               <g key={`ch4-${p}`}>
-                <line x1={px} y1={py} x2={tx} y2={ty} stroke="#fb923c" strokeWidth="1.5" />
+                <line x1={px} y1={py} x2={tx} y2={ty} stroke="#ea580c" strokeWidth="1.5" className="stroke-orange-500 dark:stroke-orange-400" />
                 <text
                   x={lx} y={ly}
-                  fill="#fb923c"
+                  fill="#ea580c"
+                  className="fill-orange-700 dark:fill-orange-400"
                   fontSize="9.5"
                   fontFamily="monospace"
                   fontWeight="600"
@@ -335,7 +343,8 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
           <text
             x={415} y={150}
             transform="rotate(59.4 415 150)"
-            fill="#fb923c"
+            fill="#ea580c"
+            className="fill-orange-700 dark:fill-orange-400"
             fontSize="10"
             fontFamily="monospace"
             fontWeight="bold"
@@ -345,7 +354,7 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
           </text>
 
           {/* Apex Summary Label */}
-          <text x={topV.x} y={topV.y - 18} fill="#fb923c" fontSize="10" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+          <text x={topV.x} y={topV.y - 18} fill="#ea580c" className="fill-orange-700 dark:fill-orange-400" fontSize="10" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
             Apex: 100% CH₄
           </text>
 
@@ -354,20 +363,20 @@ export const DuvalTrianglePlot: React.FC<DuvalTrianglePlotProps> = ({
             cx={currentPt.x}
             cy={currentPt.y}
             r="5.5"
-            fill="#22d3ee"
+            fill="#06b6d4"
             stroke="#ffffff"
             strokeWidth="2"
           />
-          <circle cx={currentPt.x} cy={currentPt.y} r="1.8" fill="#020617" />
+          <circle cx={currentPt.x} cy={currentPt.y} r="1.8" fill="#020617" className="fill-slate-900 dark:fill-slate-950" />
         </svg>
       </div>
 
       {/* Streamlined Coordinates Footer */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-lg px-2.5 py-1.5 flex items-center justify-between text-[11px] font-mono">
+      <div className="bg-slate-100/90 border border-slate-200 text-slate-700 dark:bg-slate-900/90 dark:border-slate-800 dark:text-slate-300 rounded-lg px-2.5 py-1.5 flex items-center justify-between text-[11px] font-mono">
         <div className="flex items-center gap-3">
-          <span>%CH₄: <strong className="text-orange-400">{currentDuval.pctCH4.toFixed(1)}%</strong></span>
-          <span>%C₂H₄: <strong className="text-purple-400">{currentDuval.pctC2H4.toFixed(1)}%</strong></span>
-          <span>%C₂H₂: <strong className="text-rose-400">{currentDuval.pctC2H2.toFixed(1)}%</strong></span>
+          <span>%CH₄: <strong className="text-orange-600 dark:text-orange-400">{currentDuval.pctCH4.toFixed(1)}%</strong></span>
+          <span>%C₂H₄: <strong className="text-purple-600 dark:text-purple-400">{currentDuval.pctC2H4.toFixed(1)}%</strong></span>
+          <span>%C₂H₂: <strong className="text-rose-600 dark:text-rose-400">{currentDuval.pctC2H2.toFixed(1)}%</strong></span>
         </div>
       </div>
     </div>

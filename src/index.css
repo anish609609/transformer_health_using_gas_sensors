@@ -8,6 +8,16 @@
   }
 }
 
+:root {
+  --slider-track: #cbd5e1;
+  --chart-grid: #e2e8f0;
+}
+
+html.dark {
+  --slider-track: #1e293b;
+  --chart-grid: #1e293b;
+}
+
 /* ========================================================================= */
 /* DARK MODE BASE (Default)                                                  */
 /* ========================================================================= */
@@ -142,6 +152,9 @@ html:not(.dark) line[stroke="#1e293b"] {
 }
 html:not(.dark) svg circle[fill="#020617"] {
   fill: #ffffff !important;
+}
+html:not(.dark) svg text[fill="#ffffff"] {
+  fill: #0f172a !important;
 }
 
 /* Scrollbar styles */

@@ -249,7 +249,7 @@ export const App: React.FC = () => {
           </div>
 
           {/* Substation Footer */}
-          <footer className="text-center text-[11px] font-mono text-slate-500 py-1 border-t border-slate-900 mt-0.5 flex flex-col sm:flex-row items-center justify-center">
+          <footer className="text-center text-[11px] font-mono text-slate-500 py-1 border-t border-slate-200 dark:border-slate-900 mt-0.5 flex flex-col sm:flex-row items-center justify-center">
             <div>
               ⚡ <strong>Substation Digital Twin v2.0</strong> &bull; IEEE C57.104-2019 / IEC 60599 &bull; 1D-CNN Diagnostic Engine
             </div>
