@@ -58,16 +58,16 @@ export const CnnConfidenceCard: React.FC<CnnConfidenceCardProps> = ({
           </div>
         </div>
 
-        {/* 9-Class Probability Bar Distribution (Clean 2-Column Compact Grid) */}
-        <div className="my-2 grid grid-cols-2 gap-x-3 gap-y-1.5">
+        {/* 9-Class Probability Bar Distribution (Continuous Horizontal Bar Graph) */}
+        <div className="my-1.5 space-y-1 font-mono">
           {inference.probabilities.map((item: CnnClassProbability) => (
-            <div key={item.id} className="flex items-center gap-1.5 text-[11px] font-mono">
-              <span className={`w-9 shrink-0 font-bold ${item.isTop ? 'text-white' : 'text-slate-400'}`}>
+            <div key={item.id} className="flex items-center gap-2 text-xs">
+              <span className={`w-11 font-bold shrink-0 text-[11px] ${item.isTop ? 'text-white' : 'text-slate-400'}`}>
                 {item.code}
               </span>
 
               {/* Progress Bar Container */}
-              <div className="flex-1 h-2.5 bg-slate-900 rounded border border-slate-800 overflow-hidden relative">
+              <div className="flex-1 h-3 bg-slate-900/90 rounded border border-slate-800/80 overflow-hidden relative">
                 <div
                   className="h-full rounded transition-all duration-300"
                   style={{
@@ -78,8 +78,9 @@ export const CnnConfidenceCard: React.FC<CnnConfidenceCardProps> = ({
                 />
               </div>
 
-              <span className={`w-9 text-right shrink-0 text-[10px] font-bold ${item.isTop ? 'text-cyan-300' : 'text-slate-500'}`}>
-                {item.probability.toFixed(0)}%
+              {/* Value at the end */}
+              <span className={`w-12 text-right shrink-0 text-xs font-bold ${item.isTop ? 'text-cyan-300' : 'text-slate-500'}`}>
+                {item.probability.toFixed(1)}%
               </span>
             </div>
           ))}
