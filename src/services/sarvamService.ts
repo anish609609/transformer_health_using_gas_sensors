@@ -359,13 +359,13 @@ Live Transformer Status:
 Directive: ${langPrompt}`;
 
       const chatPayload = {
-        model: 'sarvam-105b',
+        model: 'sarvam-105b-conversations',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userQuery },
         ],
         temperature: 0.7,
-        max_tokens: 220,
+        max_tokens: 500,
       };
 
       const chatRes = await callSarvamEndpoint('/v1/chat/completions', {
@@ -379,7 +379,10 @@ Directive: ${langPrompt}`;
 
       if (chatRes.ok) {
         const json = await chatRes.json();
-        const text = json?.choices?.[0]?.message?.content?.trim();
+        const text =
+          json?.choices?.[0]?.message?.content?.trim() ||
+          json?.choices?.[0]?.message?.reasoning_content?.trim() ||
+          json?.choices?.[0]?.text?.trim();
         if (text && text.length > 5) {
           return text;
         }
@@ -408,6 +411,18 @@ function buildLocalCasualResponse(
 
   // --- 1. ENGLISH (CASUAL TONE) ---
   if (lang === 'en-IN') {
+    if (q.includes('what is iec') || q.includes('about iec') || q === 'iec') {
+      return `IEC stands for the International Electrotechnical Commission! In our substation twin, IEC 60599 defines the gas ratio codes for thermal and electrical faults, while IEC 61850 standardizes our automated GOOSE communication network.`;
+    }
+
+    if (q.includes('what is ieee') || q.includes('about ieee') || q === 'ieee') {
+      return `IEEE C57.104 is the gold-standard guide for transformer DGA! It defines the 90th percentile gas threshold limits and condition levels (Condition 1 to 4) we use to score asset risk.`;
+    }
+
+    if (q.includes('what is dga') || q.includes('about dga') || q === 'dga') {
+      return `DGA is Dissolved Gas Analysis! It's essentially a blood test for the transformer oil, detecting invisible micro-sparks and overheating by measuring gases like Hydrogen, Ethylene, and Acetylene.`;
+    }
+
     if (q.includes('action') || q.includes('do') || q.includes('mitigat') || q.includes('step') || q.includes('fix')) {
       if (isHealthy) {
         return `We're totally clear right now! Just keep standard SCADA logging going and run the regular 6-month oil check. No emergency moves needed.`;
@@ -454,6 +469,18 @@ function buildLocalCasualResponse(
 
   // --- 2. TELUGU (CASUAL SPOKEN TONE) ---
   if (lang === 'te-IN') {
+    if (q.includes('what is iec') || q.includes('iec అంటే') || q === 'iec') {
+      return `IEC అంటే ఇంటర్నేషనల్ ఎలక్ట్రోటెక్నికల్ కమిషన్ బాస్! మన సబ్‌స్టేషన్ సిస్టమ్‌లో IEC 60599 గ్యాస్ రేషియోల ద్వారా ఫాల్ట్‌లను గుర్తిస్తుంది, అలాగే IEC 61850 మన ఆటోమేటెడ్ GOOSE కమ్యూనికేషన్‌ను నడుపుతుంది.`;
+    }
+
+    if (q.includes('what is ieee') || q.includes('ieee అంటే') || q === 'ieee') {
+      return `IEEE C57.104 అనేది ట్రాన్స్‌ఫార్మర్ DGA గ్యాస్ లిమిట్స్‌ను (Condition 1 నుండి 4 వరకు) మరియు TDCG అలర్ట్ స్కోర్‌లను సెట్ చేసే మెయిన్ ఇంటర్నేషనల్ స్టాండర్డ్ బాస్.`;
+    }
+
+    if (q.includes('what is dga') || q.includes('dga అంటే') || q === 'dga') {
+      return `DGA అంటే డిసాల్వ్డ్ గ్యాస్ అనాలిసిస్ బాస్! ట్రాన్స్‌ఫార్మర్ ఆయిల్‌లో కరిగిన గ్యాస్‌లను చెక్ చేసి లోపల జరిగే స్పార్క్‌లు, ఆర్కింగ్ లేదా ఓవర్‌హీటింగ్‌ను ముందే కనిపెట్టే బ్లడ్ టెస్ట్ లాంటిది.`;
+    }
+
     if (q.includes('action') || q.includes('charyalu') || q.includes('em cheyali') || q.includes('step') || q.includes('చర్య')) {
       if (isHealthy) {
         return `బాస్, అంతా సేఫ్‌గా ఉంది! రెగ్యులర్ స్కాడా మానిటరింగ్ కంటిన్యూ చేయండి, 6 నెలల ఆయిల్ శాంపిల్ టెస్ట్ టైంకి తీసుకుంటే చాలు. ఎమర్జెన్సీ ఏమీ లేదు.`;
@@ -500,6 +527,18 @@ function buildLocalCasualResponse(
 
   // --- 3. HINDI (CASUAL HINGLISH TONE) ---
   if (lang === 'hi-IN') {
+    if (q.includes('what is iec') || q.includes('iec क्या है') || q === 'iec') {
+      return `IEC का मतलब इंटरनेशनल इलेक्ट्रोटेक्निकल कमीशन है भाई! हमारे सबस्टेशन में IEC 60599 गैस रेश्यो (C2H2/C2H4 आदि) से फॉल्ट पकड़ता है और IEC 61850 हमारे ऑटोमेटेड सबस्टेशन नेटवर्क को चलाता है।`;
+    }
+
+    if (q.includes('what is ieee') || q.includes('ieee क्या है') || q === 'ieee') {
+      return `IEEE C57.104 ट्रांसफॉर्मर DGA का सबसे बड़ा इंटरनेशनल मानक है! यह गैस की लिमिट्स (Condition 1 से 4) और TDCG अलर्ट स्कोर तय करता है।`;
+    }
+
+    if (q.includes('what is dga') || q.includes('dga क्या है') || q === 'dga') {
+      return `DGA यानी Dissolved Gas Analysis भाई! यह ट्रांसफॉर्मर के ऑइल का ब्लड टेस्ट है, जिससे अंदर की स्पार्किंग, आर्किंग या ओवरहीटिंग फॉल्ट होने से पहले ही पता चल जाती है।`;
+    }
+
     if (q.includes('action') || q.includes('karna') || q.includes('kya kare') || q.includes('step') || q.includes('उपाय')) {
       if (isHealthy) {
         return `अरे भाई, अभी सब चंगा है! बस रूटीन मॉनिटरिंग चालू रखो और 6 महीने वाला ऑइल टेस्ट समय पर करा लेना। कोई टेंशन वाली बात नहीं है।`;
