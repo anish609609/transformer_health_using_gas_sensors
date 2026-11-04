@@ -7,6 +7,7 @@ import { TelemetryChart24h } from './components/TelemetryChart24h';
 import { CnnConfidenceCard } from './components/CnnConfidenceCard';
 import { ActionDispatchCard } from './components/ActionDispatchCard';
 import { VoiceBotModal } from './components/VoiceBotModal';
+import { SarvamKeyModal } from './components/SarvamKeyModal';
 
 import {
   GasReadings,
@@ -36,6 +37,7 @@ export const App: React.FC = () => {
 
   // --- Voice Bot & Sarvam State ---
   const [isVoiceBotOpen, setIsVoiceBotOpen] = useState<boolean>(false);
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState<boolean>(false);
   const [hasToken, setHasToken] = useState<boolean>(() => hasSarvamApiKey());
 
   // Listen to token changes across tabs/modals
@@ -44,6 +46,15 @@ export const App: React.FC = () => {
     window.addEventListener('storage', checkToken);
     return () => window.removeEventListener('storage', checkToken);
   }, []);
+
+  // When user clicks voice: if token exists -> opens directly; otherwise -> asks for token & gives steps immediately!
+  const handleOpenVoice = () => {
+    if (hasSarvamApiKey()) {
+      setIsVoiceBotOpen(true);
+    } else {
+      setIsKeyModalOpen(true);
+    }
+  };
 
   // --- Theme State (Defaults to Dark Mode, remembers preference) ---
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -263,7 +274,7 @@ export const App: React.FC = () => {
         paperRisk={celluloseResult.risk}
         isDarkMode={isDarkMode}
         onToggleTheme={handleToggleTheme}
-        onOpenVoiceBot={() => setIsVoiceBotOpen(true)}
+        onOpenVoiceBot={handleOpenVoice}
         hasSarvamKey={hasToken}
       />
 
@@ -329,7 +340,7 @@ export const App: React.FC = () => {
       {/* Floating Sarvam AI Voice Assistant Orb */}
       <div className="fixed bottom-5 right-5 z-30">
         <button
-          onClick={() => setIsVoiceBotOpen(true)}
+          onClick={handleOpenVoice}
           className="relative group flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-cyan-600 via-indigo-600 to-amber-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-xl shadow-cyan-600/30 hover:scale-105 transition-all cursor-pointer border border-white/20"
           title="Open Sarvam AI Multilingual Voice Assistant"
         >
@@ -353,12 +364,28 @@ export const App: React.FC = () => {
         </button>
       </div>
 
+      {/* Sarvam AI API Token Setup Modal (directly shown if no token) */}
+      <SarvamKeyModal
+        isOpen={isKeyModalOpen}
+        onClose={() => setIsKeyModalOpen(false)}
+        onKeySaved={() => {
+          setHasToken(true);
+          setIsKeyModalOpen(false);
+          // Directly open voice bot once token is provided so it works immediately!
+          setIsVoiceBotOpen(true);
+        }}
+      />
+
       {/* Sarvam AI Multilingual Voice Bot Modal */}
       <VoiceBotModal
         isOpen={isVoiceBotOpen}
         onClose={() => {
           setIsVoiceBotOpen(false);
           setHasToken(hasSarvamApiKey());
+        }}
+        onOpenKeyModal={() => {
+          setIsVoiceBotOpen(false);
+          setIsKeyModalOpen(true);
         }}
         transformerContext={liveTransformerContext}
       />

@@ -11,7 +11,8 @@ import {
   Eye, 
   EyeOff,
   Sparkles,
-  Zap
+  Zap,
+  ClipboardPaste
 } from 'lucide-react';
 import { 
   getSarvamApiKey, 
@@ -41,6 +42,24 @@ export const SarvamKeyModal: React.FC<SarvamKeyModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handlePasteClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        setApiKey(text.trim());
+        setStatusMessage({
+          type: 'info',
+          text: 'Pasted token from clipboard. Click "Connect Voice Bot" to proceed.',
+        });
+      }
+    } catch {
+      setStatusMessage({
+        type: 'error',
+        text: 'Clipboard access blocked. Please manually paste your token into the box.',
+      });
+    }
+  };
+
   const handleSaveAndTest = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanKey = apiKey.trim();
@@ -48,7 +67,7 @@ export const SarvamKeyModal: React.FC<SarvamKeyModalProps> = ({
     if (!cleanKey) {
       setStatusMessage({
         type: 'error',
-        text: 'Please enter your Sarvam AI API subscription key to continue.',
+        text: 'Please enter or paste your Sarvam AI subscription key to continue.',
       });
       return;
     }
@@ -56,7 +75,7 @@ export const SarvamKeyModal: React.FC<SarvamKeyModalProps> = ({
     setIsValidating(true);
     setStatusMessage({
       type: 'info',
-      text: 'Verifying subscription key with Sarvam AI servers...',
+      text: 'Verifying subscription key directly with Sarvam AI servers...',
     });
 
     const validation = await validateSarvamKey(cleanKey);
@@ -66,17 +85,15 @@ export const SarvamKeyModal: React.FC<SarvamKeyModalProps> = ({
       setSarvamApiKey(cleanKey);
       setStatusMessage({
         type: 'success',
-        text: 'Token verified successfully! Voice Bot is ready to speak.',
+        text: 'Token verified successfully! Opening Voice Bot...',
       });
       setTimeout(() => {
         onKeySaved(cleanKey);
-        onClose();
-      }, 900);
+      }, 400);
     } else {
-      // Even if validation call has a proxy quirk, allow saving if it looks like a valid key or let user confirm
       setStatusMessage({
         type: 'error',
-        text: validation.error || 'Failed to verify key. Please double-check your token on the Sarvam dashboard.',
+        text: validation.error || 'Validation error. You can click "Save & Open Voice Bot" below to proceed immediately.',
       });
     }
   };
@@ -86,7 +103,6 @@ export const SarvamKeyModal: React.FC<SarvamKeyModalProps> = ({
     if (!cleanKey) return;
     setSarvamApiKey(cleanKey);
     onKeySaved(cleanKey);
-    onClose();
   };
 
   const handleRemoveKey = () => {
@@ -99,85 +115,104 @@ export const SarvamKeyModal: React.FC<SarvamKeyModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden font-sans">
-        {/* Header Accent Line */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-amber-500 via-cyan-500 to-indigo-500" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in font-sans">
+      <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+        {/* Top Accent Gradient */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-amber-500 shrink-0" />
 
         {/* Modal Header */}
-        <div className="px-6 pt-5 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+        <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
               <Key className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                Sarvam AI Voice Bot Token
-                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                Sarvam AI Voice Token
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800">
                   Required
                 </span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Powers real-time Indian multilingual voice synthesis (Bulbul) &amp; recognition
+                To use multilingual voice features, enter your Sarvam subscription token
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 space-y-5">
-          {/* No Token Notice & Link to Sarvam AI */}
-          <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs space-y-2">
-            <div className="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-300">
-              <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-              <span>Don't have a Sarvam API token yet?</span>
-            </div>
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-              You can get your free Sarvam AI subscription key from their developer portal:
-            </p>
-            <div className="pt-1 flex flex-wrap gap-2">
+        <div className="p-5 overflow-y-auto space-y-4">
+          {/* Steps to get Sarvam Token */}
+          <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 text-xs space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
+                <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Don't have a Sarvam API token? Get it free:</span>
+              </div>
               <a
                 href="https://dashboard.sarvam.ai/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium shadow-sm transition hover:scale-[1.02] cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold transition shadow-sm hover:scale-102 cursor-pointer text-[11px]"
               >
-                <span>Get Token on Sarvam Dashboard</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-              <a
-                href="https://www.sarvam.ai/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 transition"
-              >
-                <span>About Sarvam.ai</span>
-                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Go to Dashboard</span>
+                <ExternalLink className="w-3 h-3" />
               </a>
             </div>
-            <div className="pt-1 text-[11px] text-slate-500 dark:text-slate-400 border-t border-amber-500/20">
-              <strong>Quick 3-step guide:</strong> 1. Sign in at <code className="text-cyan-600 dark:text-cyan-400">dashboard.sarvam.ai</code> &rarr; 2. Click <strong>API Keys</strong> &rarr; 3. Generate key &amp; paste it below.
-            </div>
+
+            {/* Clear numbered steps */}
+            <ol className="space-y-1.5 text-slate-700 dark:text-slate-300 pl-4 list-decimal text-[11px] leading-relaxed">
+              <li>
+                Visit the Sarvam portal:{' '}
+                <a
+                  href="https://dashboard.sarvam.ai/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-cyan-600 dark:text-cyan-400 underline font-semibold"
+                >
+                  dashboard.sarvam.ai
+                </a>
+              </li>
+              <li>Sign in or create a free account with your email or phone number.</li>
+              <li>
+                Click on the <strong>API Keys</strong> tab in the navigation menu.
+              </li>
+              <li>
+                Click <strong>Create New Key</strong> and copy your subscription token.
+              </li>
+              <li>Paste the token into the box below and click <strong>Connect Voice Bot</strong>.</li>
+            </ol>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSaveAndTest} className="space-y-4">
+          <form onSubmit={handleSaveAndTest} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                Sarvam API Subscription Key (<span className="font-mono text-cyan-600 dark:text-cyan-400">api-subscription-key</span>)
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Sarvam API Subscription Key (<span className="font-mono text-cyan-600 dark:text-cyan-400">api-subscription-key</span>)
+                </label>
+                <button
+                  type="button"
+                  onClick={handlePasteClipboard}
+                  className="inline-flex items-center gap-1 text-[11px] text-cyan-600 dark:text-cyan-400 hover:underline cursor-pointer"
+                >
+                  <ClipboardPaste className="w-3 h-3" />
+                  <span>Paste from Clipboard</span>
+                </button>
+              </div>
+
               <div className="relative">
                 <input
                   type={showKey ? 'text' : 'password'}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="e.g. sk-sa_... or your 32-character subscription key"
+                  placeholder="Paste your Sarvam token here (e.g. sk-sa_... or 32-char key)"
                   className="w-full px-3.5 py-2.5 pr-10 text-xs font-mono bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                 />
                 <button
@@ -206,26 +241,29 @@ export const SarvamKeyModal: React.FC<SarvamKeyModalProps> = ({
                 {statusMessage.type === 'info' && <Loader2 className="w-4 h-4 shrink-0 mt-0.5 animate-spin text-cyan-500" />}
                 <div className="flex-1">
                   <span>{statusMessage.text}</span>
-                  {statusMessage.type === 'error' && apiKey.trim().length > 10 && (
-                    <button
-                      type="button"
-                      onClick={handleForceSave}
-                      className="block mt-1 underline font-semibold text-rose-700 dark:text-rose-300 hover:text-rose-900 cursor-pointer"
-                    >
-                      Save anyway &amp; proceed &rarr;
-                    </button>
+                  {statusMessage.type === 'error' && apiKey.trim().length > 5 && (
+                    <div className="mt-1.5 pt-1.5 border-t border-rose-500/20 flex items-center justify-between">
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">Want to use it without testing?</span>
+                      <button
+                        type="button"
+                        onClick={handleForceSave}
+                        className="font-bold underline text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 cursor-pointer"
+                      >
+                        Save &amp; Open Voice Bot &rarr;
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
             )}
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between pt-1">
               {getSarvamApiKey() ? (
                 <button
                   type="button"
                   onClick={handleRemoveKey}
-                  className="text-xs text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 transition"
+                  className="text-xs text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 transition cursor-pointer"
                 >
                   Clear Saved Key
                 </button>
@@ -235,14 +273,14 @@ export const SarvamKeyModal: React.FC<SarvamKeyModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
+                  className="px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isValidating || !apiKey.trim()}
-                  className="flex items-center gap-2 px-5 py-2 text-xs font-bold bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-xl shadow-md shadow-cyan-500/20 transition cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-xl shadow-md shadow-cyan-500/20 transition cursor-pointer"
                 >
                   {isValidating ? (
                     <>

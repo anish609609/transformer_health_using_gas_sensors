@@ -2,9 +2,9 @@
 // Integration with Sarvam AI APIs:
 // - Text-to-Speech (Bulbul models)
 // - Speech-to-Text (Saaras models)
-// - Chat & Diagnostics Reasoning in Casual Language Tone (English, Hindi, Tamil)
+// - Chat & Diagnostics Reasoning in Casual Language Tone (English, Telugu, Hindi)
 
-export type SarvamLanguageCode = 'en-IN' | 'hi-IN' | 'ta-IN';
+export type SarvamLanguageCode = 'en-IN' | 'te-IN' | 'hi-IN';
 
 export interface SarvamLanguageOption {
   code: SarvamLanguageCode;
@@ -20,27 +20,27 @@ export const SARVAM_LANGUAGES: SarvamLanguageOption[] = [
     label: 'English (Indian)',
     nativeLabel: 'English',
     flag: '🇮🇳',
-    defaultSpeaker: 'meera',
+    defaultSpeaker: 'kavya',
+  },
+  {
+    code: 'te-IN',
+    label: 'Telugu (తెలుగు)',
+    nativeLabel: 'తెలుగు',
+    flag: '🇮🇳',
+    defaultSpeaker: 'kavya',
   },
   {
     code: 'hi-IN',
     label: 'Hindi (हिंदी)',
     nativeLabel: 'हिंदी / Hinglish',
     flag: '🇮🇳',
-    defaultSpeaker: 'meera',
-  },
-  {
-    code: 'ta-IN',
-    label: 'Tamil (தமிழ்)',
-    nativeLabel: 'தமிழ்',
-    flag: '🇮🇳',
-    defaultSpeaker: 'meera',
+    defaultSpeaker: 'kavya',
   },
 ];
 
 export const SARVAM_SPEAKERS = [
-  { id: 'meera', name: 'Meera (Natural Female)', gender: 'Female' },
-  { id: 'arvind', name: 'Arvind (Natural Male)', gender: 'Male' },
+  { id: 'kavya', name: 'Kavya (Natural Female)', gender: 'Female' },
+  { id: 'aditya', name: 'Aditya (Natural Male)', gender: 'Male' },
   { id: 'shubh', name: 'Shubh (Casual Expressive)', gender: 'Male' },
 ];
 
@@ -52,7 +52,7 @@ const LOCAL_STORAGE_SPEAKER = 'sarvam_selected_speaker';
 
 export const getSarvamApiKey = (): string => {
   try {
-    return localStorage.getItem(LOCAL_STORAGE_KEY) || '';
+    return (localStorage.getItem(LOCAL_STORAGE_KEY) || '').trim();
   } catch {
     return '';
   }
@@ -82,7 +82,7 @@ export const hasSarvamApiKey = (): boolean => {
 export const getSavedLanguage = (): SarvamLanguageCode => {
   try {
     const saved = localStorage.getItem(LOCAL_STORAGE_LANG);
-    if (saved === 'en-IN' || saved === 'hi-IN' || saved === 'ta-IN') {
+    if (saved === 'en-IN' || saved === 'te-IN' || saved === 'hi-IN') {
       return saved;
     }
   } catch {}
@@ -97,9 +97,12 @@ export const setSavedLanguage = (lang: SarvamLanguageCode): void => {
 
 export const getSavedSpeaker = (): string => {
   try {
-    return localStorage.getItem(LOCAL_STORAGE_SPEAKER) || 'meera';
+    const saved = localStorage.getItem(LOCAL_STORAGE_SPEAKER);
+    if (saved === 'kavya' || saved === 'aditya' || saved === 'shubh') {
+      return saved;
+    }
   } catch {}
-  return 'meera';
+  return 'kavya';
 };
 
 export const setSavedSpeaker = (speaker: string): void => {
@@ -108,14 +111,23 @@ export const setSavedSpeaker = (speaker: string): void => {
   } catch {}
 };
 
-// --- URL Resolver for Vite Dev Proxy & Production ---
-const resolveApiUrl = (endpoint: string): { primary: string; direct: string } => {
+// --- Resilient HTTP Endpoint Dispatcher ---
+// Tries direct https://api.sarvam.ai first (since Sarvam returns Access-Control-Allow-Origin: *).
+// If direct call fails due to network/firewall, gracefully falls back to local proxy /api/sarvam.
+async function callSarvamEndpoint(endpoint: string, options: RequestInit): Promise<Response> {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  return {
-    primary: `/api/sarvam${cleanEndpoint}`,
-    direct: `https://api.sarvam.ai${cleanEndpoint}`,
-  };
-};
+  const directUrl = `https://api.sarvam.ai${cleanEndpoint}`;
+  const proxyUrl = `/api/sarvam${cleanEndpoint}`;
+
+  try {
+    const res = await fetch(directUrl, options);
+    // If we received an actual HTTP response from Sarvam (even 4xx/5xx), return it directly.
+    return res;
+  } catch (directError) {
+    console.warn(`Direct fetch to ${directUrl} had a network error. Trying proxy ${proxyUrl}...`, directError);
+    return fetch(proxyUrl, options);
+  }
+}
 
 // --- Sarvam API Key Verification ---
 export const validateSarvamKey = async (apiKey: string): Promise<{ valid: boolean; error?: string }> => {
@@ -124,18 +136,17 @@ export const validateSarvamKey = async (apiKey: string): Promise<{ valid: boolea
   }
 
   const cleanKey = apiKey.trim();
-  const urls = resolveApiUrl('/text-to-speech');
 
-  // Test lightweight TTS request
+  // Test lightweight TTS request using official Sarvam Bulbul v3 schema
   const testPayload = {
-    text: 'Test',
-    language_code: 'en-IN',
+    text: 'Hello',
+    target_language_code: 'en-IN',
     model: 'bulbul:v3',
-    speaker: 'meera',
+    speaker: 'kavya',
   };
 
-  const tryRequest = async (url: string) => {
-    return fetch(url, {
+  try {
+    const res = await callSarvamEndpoint('/text-to-speech', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -143,15 +154,6 @@ export const validateSarvamKey = async (apiKey: string): Promise<{ valid: boolea
       },
       body: JSON.stringify(testPayload),
     });
-  };
-
-  try {
-    let res: Response;
-    try {
-      res = await tryRequest(urls.primary);
-    } catch {
-      res = await tryRequest(urls.direct);
-    }
 
     if (res.ok) {
       return { valid: true };
@@ -164,13 +166,25 @@ export const validateSarvamKey = async (apiKey: string): Promise<{ valid: boolea
       };
     }
 
+    if (res.status === 429) {
+      return {
+        valid: false,
+        error: 'Rate limit or quota reached on Sarvam AI. Check your account at dashboard.sarvam.ai.',
+      };
+    }
+
     const errJson = await res.json().catch(() => null);
-    const detail = errJson?.message || errJson?.detail || `Status code: ${res.status}`;
-    return { valid: false, error: `Sarvam API error: ${detail}` };
+    const detail =
+      errJson?.error?.message ||
+      errJson?.message ||
+      (Array.isArray(errJson?.detail) ? errJson.detail.map((d: any) => d.msg || d).join(', ') : errJson?.detail) ||
+      `HTTP status ${res.status}`;
+
+    return { valid: false, error: `Sarvam AI response: ${detail}` };
   } catch (err: any) {
     return {
       valid: false,
-      error: err?.message || 'Network error connecting to Sarvam AI. Check your connection.',
+      error: `Network error: ${err?.message || 'Could not connect to Sarvam AI'}. Check your internet connection.`,
     };
   }
 };
@@ -192,47 +206,45 @@ export const synthesizeSpeech = async (
     throw new Error('Sarvam API key is required. Please provide your token.');
   }
 
-  const urls = resolveApiUrl('/text-to-speech');
+  // Official Sarvam Bulbul request schema (uses 'text' and 'target_language_code' with bulbul:v3)
   const payload = {
     text: options.text,
-    language_code: options.languageCode,
+    target_language_code: options.languageCode,
     speaker: options.speaker || getSavedSpeaker(),
-    model: 'bulbul:v3',
-    pace: options.pace ?? 1.05,
+    pitch: 0,
+    pace: options.pace ?? 1.0,
+    loudness: 1.5,
     speech_sample_rate: 24000,
+    enable_preprocessing: true,
+    model: 'bulbul:v3',
   };
 
-  const tryCall = async (url: string) => {
-    return fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-subscription-key': apiKey,
-      },
-      body: JSON.stringify(payload),
-    });
-  };
-
-  let response: Response;
-  try {
-    response = await tryCall(urls.primary);
-    if (!response.ok && response.status === 404) {
-      response = await tryCall(urls.direct);
-    }
-  } catch {
-    response = await tryCall(urls.direct);
-  }
+  const response = await callSarvamEndpoint('/text-to-speech', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-subscription-key': apiKey,
+    },
+    body: JSON.stringify(payload),
+  });
 
   if (!response.ok) {
-    const errorBody = await response.text().catch(() => '');
-    throw new Error(`Sarvam TTS error (${response.status}): ${errorBody || response.statusText}`);
+    const errorJson = await response.json().catch(() => null);
+    const msg = errorJson?.error?.message || errorJson?.message || response.statusText;
+    throw new Error(`Sarvam TTS error (${response.status}): ${msg}`);
   }
 
   const data = await response.json();
-  const base64Audio = Array.isArray(data.audios) ? data.audios[0] : (data.audio || data.audios);
+  const base64Audio = Array.isArray(data.audios)
+    ? data.audios[0]
+    : typeof data.audio === 'string'
+    ? data.audio
+    : typeof data.audios === 'string'
+    ? data.audios
+    : null;
 
   if (!base64Audio) {
-    throw new Error('No audio data received in Sarvam TTS response');
+    throw new Error('No audio returned by Sarvam TTS response');
   }
 
   const audioUrl = `data:audio/wav;base64,${base64Audio}`;
@@ -255,38 +267,29 @@ export const transcribeAudio = async (
     throw new Error('Sarvam API key is required. Please provide your token.');
   }
 
-  const urls = resolveApiUrl('/speech-to-text');
   const formData = new FormData();
   formData.append('file', options.audioBlob, 'user_audio.wav');
   formData.append('model', 'saaras:v4');
   formData.append('mode', 'transcribe');
+  if (options.languageCode) {
+    formData.append('language_code', options.languageCode);
+  }
   if (options.prompt) {
     formData.append('prompt', options.prompt);
   }
 
-  const tryCall = async (url: string) => {
-    return fetch(url, {
-      method: 'POST',
-      headers: {
-        'api-subscription-key': apiKey,
-      },
-      body: formData,
-    });
-  };
-
-  let response: Response;
-  try {
-    response = await tryCall(urls.primary);
-    if (!response.ok && response.status === 404) {
-      response = await tryCall(urls.direct);
-    }
-  } catch {
-    response = await tryCall(urls.direct);
-  }
+  const response = await callSarvamEndpoint('/speech-to-text', {
+    method: 'POST',
+    headers: {
+      'api-subscription-key': apiKey,
+    },
+    body: formData,
+  });
 
   if (!response.ok) {
-    const errText = await response.text().catch(() => '');
-    throw new Error(`Sarvam STT failed (${response.status}): ${errText || response.statusText}`);
+    const errJson = await response.json().catch(() => null);
+    const msg = errJson?.error?.message || errJson?.message || response.statusText;
+    throw new Error(`Sarvam STT failed (${response.status}): ${msg}`);
   }
 
   const data = await response.json();
@@ -324,7 +327,7 @@ export interface LiveTransformerContext {
   urgency: string;
 }
 
-// --- Casual Response Generator (Multi-Language, Casual Tone) ---
+// --- Casual Response Generator (English, Telugu, Hindi) ---
 export const generateCasualResponse = async (
   userQuery: string,
   context: LiveTransformerContext,
@@ -333,19 +336,18 @@ export const generateCasualResponse = async (
 ): Promise<string> => {
   const cleanKey = apiKey || getSarvamApiKey();
 
-  // Try Sarvam Chat Completion if key is available
+  // Try Sarvam Chat Completion if token is present
   if (cleanKey) {
     try {
-      const urls = resolveApiUrl('/v1/chat/completions');
       const langPrompt =
-        language === 'hi-IN'
+        language === 'te-IN'
+          ? 'Respond in casual, conversational Telugu (తెలుగు). Speak like a friendly electrical substation engineer in Andhra Pradesh / Telangana chatting with a colleague in the control room. Keep it to 2-3 short, spoken sentences.'
+          : language === 'hi-IN'
           ? 'Respond in casual, conversational Hindi / Hinglish. Speak like a friendly Indian electrical substation engineer having a casual chat with a peer. Keep it to 2-3 short, spoken sentences.'
-          : language === 'ta-IN'
-          ? 'Respond in casual, conversational spoken Tamil. Speak like a friendly Tamil Nadu substation engineer chatting with a colleague. Keep it to 2-3 short, spoken sentences.'
           : 'Respond in casual, friendly Indian English. Speak like a smart, approachable substation engineer giving quick advice to a teammate in the control room. Keep it to 2-3 short, punchy sentences.';
 
       const systemPrompt = `You are 'VoltBot', a friendly, casual power transformer diagnostic AI assistant in a substation control room.
-Your tone MUST be casual, warm, conversational, and direct—never robotic or stuffy. Avoid markdown tables or bullet points; speak naturally so it can be read aloud via Text-to-Speech.
+Your tone MUST be casual, warm, conversational, and direct—never robotic or stuffy. Avoid markdown formatting or bullet points; speak naturally so it sounds great when read aloud via Text-to-Speech.
 Live Transformer Status:
 - Scenario: ${context.scenarioName} (${context.scenarioCode})
 - Live Gases (ppm): H2=${context.currentGases.H2}, CH4=${context.currentGases.CH4}, C2H6=${context.currentGases.C2H6}, C2H4=${context.currentGases.C2H4}, C2H2=${context.currentGases.C2H2}, CO=${context.currentGases.CO}, CO2=${context.currentGases.CO2}
@@ -366,26 +368,14 @@ Directive: ${langPrompt}`;
         max_tokens: 220,
       };
 
-      const tryChat = async (url: string) => {
-        return fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'api-subscription-key': cleanKey,
-          },
-          body: JSON.stringify(chatPayload),
-        });
-      };
-
-      let chatRes: Response;
-      try {
-        chatRes = await tryChat(urls.primary);
-        if (!chatRes.ok && chatRes.status === 404) {
-          chatRes = await tryChat(urls.direct);
-        }
-      } catch {
-        chatRes = await tryChat(urls.direct);
-      }
+      const chatRes = await callSarvamEndpoint('/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-subscription-key': cleanKey,
+        },
+        body: JSON.stringify(chatPayload),
+      });
 
       if (chatRes.ok) {
         const json = await chatRes.json();
@@ -416,7 +406,7 @@ function buildLocalCasualResponse(
   const isPD = ctx.duvalZoneCode === 'PD';
   const isPaper = ctx.paperRisk === 'High' || ctx.scenarioCode === 'CELL';
 
-  // --- ENGLISH (CASUAL TONE) ---
+  // --- 1. ENGLISH (CASUAL TONE) ---
   if (lang === 'en-IN') {
     if (q.includes('action') || q.includes('do') || q.includes('mitigat') || q.includes('step') || q.includes('fix')) {
       if (isHealthy) {
@@ -462,7 +452,53 @@ function buildLocalCasualResponse(
     return `Hey! Current status is ${ctx.scenarioName} with TDCG at ${ctx.tdcg.toFixed(0)} ppm. ${ctx.recommendedAction}`;
   }
 
-  // --- HINDI (CASUAL HINGLISH TONE) ---
+  // --- 2. TELUGU (CASUAL SPOKEN TONE) ---
+  if (lang === 'te-IN') {
+    if (q.includes('action') || q.includes('charyalu') || q.includes('em cheyali') || q.includes('step') || q.includes('చర్య')) {
+      if (isHealthy) {
+        return `బాస్, అంతా సేఫ్‌గా ఉంది! రెగ్యులర్ స్కాడా మానిటరింగ్ కంటిన్యూ చేయండి, 6 నెలల ఆయిల్ శాంపిల్ టెస్ట్ టైంకి తీసుకుంటే చాలు. ఎమర్జెన్సీ ఏమీ లేదు.`;
+      }
+      if (isArcing) {
+        return `బాస్ కొంచెం జాగ్రత్త, ఇది చాలా సీరియస్! వెంటనే ట్రాన్స్‌ఫార్మర్ లోడ్ తగ్గించి లేదా ఐసోలేట్ చేయండి, ఆయిల్ బ్రేక్‌డౌన్ వోల్టేజ్ (BDV) టెస్ట్ వెంటనే చేయించాలి!`;
+      }
+      if (isThermal) {
+        return `ముందుగా కూలింగ్ ఫ్యాన్లు, ఆయిల్ పంపులు చెక్ చేయండి బాస్. లోడ్ కనీసం ఇరవై శాతం తగ్గించి, ట్యాంక్ ఇన్‌ఫ్రారెడ్ థర్మల్ స్కాన్ వెంటనే చేయించండి.`;
+      }
+      return `ఇప్పుడు చేయాల్సిన ముఖ్యమైన పని: ${ctx.recommendedAction} బాస్. ఇది ${ctx.urgency} లెవల్, ఏమాత్రం ఆలస్యం చేయకుండా టీమ్‌ను అలర్ట్ చేయండి!`;
+    }
+
+    if (q.includes('paper') || q.includes('cellulose') || q.includes('పేపర్') || q.includes('ఇన్సులేషన్') || q.includes('co2')) {
+      if (isPaper) {
+        return `బాస్ గమనించండి, పేపర్ ఇన్సులేషన్ ప్రమాదంలో ఉంది! CO2/CO నిష్పత్తి ${ctx.celluloseRatio.toFixed(1)} కి పడిపోయింది, అంటే వైండింగ్ పేపర్ కాలిపోతోంది. పేపర్ డ్యామేజ్ మళ్ళీ రివర్స్ కాదు, వెంటనే లోడ్ తగ్గించండి!`;
+      }
+      return `పేపర్ ఇన్సులేషన్ చాలా బాగుంది బాస్. CO2/CO నిష్పత్తి ${ctx.celluloseRatio.toFixed(1)} దగ్గర ఉంది, కాబట్టి సెల్లూలోజ్ డీగ్రేడేషన్ రిస్క్ ప్రస్తుతం లేదు.`;
+    }
+
+    if (q.includes('duval') || q.includes('triangle') || q.includes('డ్యూవల్')) {
+      return `డ్యూవల్ ట్రయాంగిల్ 1 ప్రస్తుతం ${ctx.duvalZone} జోన్ చూపిస్తోంది. మీథేన్ ${ctx.duvalPercentages.ch4.toFixed(0)}%, ఇథిలీన్ ${ctx.duvalPercentages.c2h4.toFixed(0)}%, ఎసిటిలీన్ ${ctx.duvalPercentages.c2h2.toFixed(0)}%. ${isArcing ? 'ఈ ఎసిటిలీన్ శాతం స్పష్టంగా ఎలక్ట్రికల్ ఆర్కింగ్ సంకేతం!' : 'రీడింగ్స్ అన్నీ నార్మల్ పరిమితిలోనే ఉన్నాయి.'}`;
+    }
+
+    if (q.includes('gas') || q.includes('గ్యాస్') || q.includes('ppm') || q.includes('reading')) {
+      return `ప్రస్తుత గ్యాస్ రీడింగ్స్: హైడ్రోజన్ ${ctx.currentGases.H2} ppm, ఎసిటిలీన్ ${ctx.currentGases.C2H2} ppm, ఇథిలీన్ ${ctx.currentGases.C2H4} ppm. మొత్తం దహనశీల వాయువులు (TDCG) ${ctx.tdcg.toFixed(0)} ppm (${ctx.tdcgCondition}).`;
+    }
+
+    // Default status summary
+    if (isHealthy) {
+      return `నమస్కారం బాస్! ట్రాన్స్‌ఫార్మర్ అంతా పక్కాగా నడుస్తోంది. TDCG ${ctx.tdcg.toFixed(0)} ppm మాత్రమే ఉంది, గ్యాసెస్ అన్నీ సేఫ్ లిమిట్ లోనే ఉన్నాయి. ఎలాంటి ఇబ్బందీ లేదు!`;
+    }
+    if (isArcing) {
+      return `అలర్ట్ బాస్! ట్యాంక్ లోపల పెద్ద స్పార్క్ లేదా ఆర్కింగ్ జరుగుతోంది—ఎసిటిలీన్ ${ctx.currentGases.C2H2} ppm వరకు ఎగిసింది. డ్యూవల్ ట్రయాంగిల్ ${ctx.duvalZone} చూపిస్తోంది, వెంటనే బ్రేకర్‌ను చెక్ చేయండి!`;
+    }
+    if (isThermal) {
+      return `బాస్ లోపల బాగా వేడెక్కుతోంది! ఇథిలీన్ పెరిగింది మరియు డ్యూవల్ ట్రయాంగిల్ ${ctx.duvalZone} చూపిస్తోంది. కూలింగ్ ఫ్యాన్లు, ఆయిల్ లెవల్ వెంటనే చూడాలి!`;
+    }
+    if (isPD) {
+      return `హైడ్రోజన్ ${ctx.currentGases.H2} ppm కి చేరింది బాస్, ఇది పార్షియల్ డిశ్చార్జ్ సంకేతం. బుషింగ్స్ మరియు ఆయిల్ శాంపిల్ వెంటనే తనిఖీ చేయించండి!`;
+    }
+    return `బాస్! ప్రస్తుత స్టేటస్: ${ctx.scenarioName}. TDCG ${ctx.tdcg.toFixed(0)} ppm. ${ctx.recommendedAction}`;
+  }
+
+  // --- 3. HINDI (CASUAL HINGLISH TONE) ---
   if (lang === 'hi-IN') {
     if (q.includes('action') || q.includes('karna') || q.includes('kya kare') || q.includes('step') || q.includes('उपाय')) {
       if (isHealthy) {
@@ -506,52 +542,6 @@ function buildLocalCasualResponse(
       return `यहाँ Hydrogen ${ctx.currentGases.H2} ppm हो गया है, जो पार्शियल डिस्चार्ज का पक्का सिग्नल है। बुशिंग्स और ऑइल की जांच करवा लो भाई!`;
     }
     return `अभी ट्रांसफॉर्मर का स्टेटस है: ${ctx.scenarioName}। TDCG ${ctx.tdcg.toFixed(0)} ppm है। ${ctx.recommendedAction}`;
-  }
-
-  // --- TAMIL (CASUAL SPOKEN TONE) ---
-  if (lang === 'ta-IN') {
-    if (q.includes('action') || q.includes('enna') || q.includes('seiyanum') || q.includes('step') || q.includes('நடவடிக்கை')) {
-      if (isHealthy) {
-        return `பாஸ், இப்போதைக்கு எல்லாம் பக்காவா இருக்கு! வழக்கமான ஸ்காடா மானிட்டரிங் பண்ணா போதும், எந்த அவசர ஆக்ஷனும் தேவையில்லை.`;
-      }
-      if (isArcing) {
-        return `பாஸ் உஷாரா இருங்க, இது ரொம்ப சீரியஸ்! உடனே டிரான்ஸ்பார்மரை ட்ரிப் பண்ணி ஐசோலேட் பண்ணுங்க, ஆயில் பிரேக் டவுன் வோல்டேஜ் டெஸ்ட் உடனே எடுக்கணும்!`;
-      }
-      if (isThermal) {
-        return `முதல்ல கூலிங் பேன்ஸ் மற்றும் ஆயில் பம்பை செக் பண்ணுங்க பாஸ். லோட குறைஞ்சது இருவது சதவீதம் குறைச்சுட்டு இன்ஃப்ராரெட் ஸ்கேன் பண்ணுங்க.`;
-      }
-      return `அடுத்த ஸ்டெப்: ${ctx.recommendedAction} பாஸ். இது ரொம்ப முக்கியம், தாமதிக்காம செக் பண்ணுங்க!`;
-    }
-
-    if (q.includes('paper') || q.includes('cellulose') || q.includes('இன்சுலேஷன்')) {
-      if (isPaper) {
-        return `கவனியுங்க பாஸ்! CO2/CO ரேஷியோ ${ctx.celluloseRatio.toFixed(1)}-ஆ குறைஞ்சிடுச்சு. வைண்டிங் பேப்பர் இன்சுலேஷன் டேமேஜ் ஆகுது, உடனடியா லோட குறைக்கணும்!`;
-      }
-      return `பேப்பர் இன்சுலேஷன் நல்ல கண்டிஷன்ல தான் இருக்கு பாஸ். CO2/CO ரேஷியோ ${ctx.celluloseRatio.toFixed(1)}-ல சேஃபா இருக்கு.`;
-    }
-
-    if (q.includes('duval') || q.includes('triangle')) {
-      return `டுவால் ட்ரையாங்கிள் இப்போ ${ctx.duvalZone} காட்டுது. மீத்தேன் ${ctx.duvalPercentages.ch4.toFixed(0)}%, எத்திலீன் ${ctx.duvalPercentages.c2h4.toFixed(0)}%, அசிட்டிலின் ${ctx.duvalPercentages.c2h2.toFixed(0)}%. ${isArcing ? 'அசிட்டிலின் அதிகமா இருக்கிறது எலக்ட்ரிக்கல் ஆர்க்கிங் அறிகுறி!' : 'எல்லாம் கட்டுப்பாட்டுக்குள் இருக்கு.'}`;
-    }
-
-    if (q.includes('gas') || q.includes('ppm') || q.includes('reading')) {
-      return `தற்போதைய கேஸ் அளவு: ஹைட்ரஜன் ${ctx.currentGases.H2} ppm, அசிட்டிலின் ${ctx.currentGases.C2H2} ppm, எத்திலீன் ${ctx.currentGases.C2H4} ppm. மொத்த TDCG அளவு ${ctx.tdcg.toFixed(0)} ppm.`;
-    }
-
-    // Default status summary
-    if (isHealthy) {
-      return `வணக்கம் பாஸ்! டிரான்ஸ்பார்மர் எந்த பிரச்சனையும் இல்லாம சூப்பரா இயங்குது. TDCG ${ctx.tdcg.toFixed(0)} ppm தான், எல்லா கேஸ்களும் சேஃப் லிமிட்டுல இருக்கு!`;
-    }
-    if (isArcing) {
-      return `ஐயோ பாஸ், டேங்க் உள்ள பெரிய ஸ்பார்க் அடிக்குது! அசிட்டிலின் ${ctx.currentGases.C2H2} ppm வரை ஏறிடுச்சு, டுவால் ட்ரையாங்கிள் ${ctx.duvalZone} காட்டுது. உடனே கவனியுங்க!`;
-    }
-    if (isThermal) {
-      return `பாஸ் உள்ள பயங்கரமா சூடாகி இருக்கு! எத்திலீன் அதிகமா இருக்கு, டுவால் ட்ரையாங்கிள் ${ctx.duvalZone} காட்டுது. கூலிங் சிஸ்டத்தை உடனே பாருங்க!`;
-    }
-    if (isPD) {
-      return `ஹைட்ரஜன் அளவு ${ctx.currentGases.H2} ppm-க்கு போயிருச்சு பாஸ், இது பார்ஷியல் டிஸ்சார்ஜ் ஆகுதுன்னு அர்த்தம். புஷிங்ஸை சீக்கிரமா செக் பண்ணிடுங்க!`;
-    }
-    return `வணக்கம் பாஸ்! இப்போ நிலைமை: ${ctx.scenarioName}. TDCG ${ctx.tdcg.toFixed(0)} ppm. ${ctx.recommendedAction}`;
   }
 
   return `Current transformer status is ${ctx.scenarioName} with TDCG at ${ctx.tdcg.toFixed(0)} ppm. Recommended action: ${ctx.recommendedAction}`;

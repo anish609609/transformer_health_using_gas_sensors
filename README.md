@@ -25,7 +25,7 @@ This platform delivers an **Industrial Substation AI Digital Twin** combining an
 5. **Action & Mitigation Engine:** Translates diagnostic inferences directly into operational mitigating commands and field testing diagnostic work-orders.
 6. **Built-in DGA Regulatory Learning Hub:** Instant multi-tab reference covering IEEE C57.104-2019, IEC 60599 ratios, and IEC 61850 substation logical nodes (`SIML`, `GGIO`, `GOOSE`).
 7. **Full Dual-Theme Architecture:** Seamless Light and Dark mode support with high-contrast SVG rendering and persistent user preference.
-8. **Sarvam AI Multilingual Voice Bot:** Conversational real-time voice diagnostics powered by Sarvam AI (Bulbul neural TTS & Saaras speech recognition). Features interactive voice consultation across **3 languages (English, Hindi, and Tamil)** in a **casual, approachable control room engineer tone**, with automated telemetry awareness and token onboarding.
+8. **Sarvam AI Multilingual Voice Bot:** Conversational real-time voice diagnostics powered by Sarvam AI (Bulbul neural TTS & Saaras speech recognition). Features interactive voice consultation across **3 languages (English, Telugu, and Hindi)** in a **casual, approachable control room engineer tone**, with automated telemetry awareness and token onboarding.
 
 ---
 
