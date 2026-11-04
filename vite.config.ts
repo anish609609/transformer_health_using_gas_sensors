@@ -7,6 +7,13 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    proxy: {
+      '/api/sarvam': {
+        target: 'https://api.sarvam.ai',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/sarvam/, ''),
+      },
+    },
   },
   build: {
     outDir: 'dist',

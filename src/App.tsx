@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Github } from 'lucide-react';
+import { Github, Mic } from 'lucide-react';
 import { TopExecutiveBar } from './components/TopExecutiveBar';
 import { GasControlSliders } from './components/GasControlSliders';
 import { DuvalTrianglePlot } from './components/DuvalTrianglePlot';
 import { TelemetryChart24h } from './components/TelemetryChart24h';
 import { CnnConfidenceCard } from './components/CnnConfidenceCard';
 import { ActionDispatchCard } from './components/ActionDispatchCard';
+import { VoiceBotModal } from './components/VoiceBotModal';
 
 import {
   GasReadings,
@@ -19,9 +20,11 @@ import {
   generateSequence,
   generateCustomSequence,
   TelemetryPoint,
+  SCENARIO_PRESETS,
 } from './engine/scenarioPresets';
 import { predict1DCNN, predictFallbackInference, DiagnosticInference } from './engine/cnnInference';
 import { getActionProtocol } from './engine/actionProtocol';
+import { hasSarvamApiKey, LiveTransformerContext } from './services/sarvamService';
 
 export const App: React.FC = () => {
   // --- Simulation & Scenario State ---
@@ -30,6 +33,17 @@ export const App: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [noiseEnabled, setNoiseEnabled] = useState<boolean>(false);
   const [isCustomMode, setIsCustomMode] = useState<boolean>(false);
+
+  // --- Voice Bot & Sarvam State ---
+  const [isVoiceBotOpen, setIsVoiceBotOpen] = useState<boolean>(false);
+  const [hasToken, setHasToken] = useState<boolean>(() => hasSarvamApiKey());
+
+  // Listen to token changes across tabs/modals
+  useEffect(() => {
+    const checkToken = () => setHasToken(hasSarvamApiKey());
+    window.addEventListener('storage', checkToken);
+    return () => window.removeEventListener('storage', checkToken);
+  }, []);
 
   // --- Theme State (Defaults to Dark Mode, remembers preference) ---
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -147,6 +161,29 @@ export const App: React.FC = () => {
     return getActionProtocol(diagnosticKey);
   }, [duvalCoords, celluloseResult, cnnInference]);
 
+  // 4. Live Substation Context for Sarvam Voice Bot
+  const liveTransformerContext: LiveTransformerContext = useMemo(() => {
+    const scenarioPreset = SCENARIO_PRESETS[currentScenario];
+    return {
+      scenarioName: scenarioPreset?.name || currentScenario,
+      scenarioCode: scenarioPreset?.code || 'NORM',
+      currentGases,
+      tdcg: tdcgResult.tdcg,
+      tdcgCondition: tdcgResult.status,
+      duvalZone: duvalCoords.zone,
+      duvalZoneCode: duvalCoords.zoneCode,
+      duvalPercentages: {
+        ch4: duvalCoords.pctCH4,
+        c2h4: duvalCoords.pctC2H4,
+        c2h2: duvalCoords.pctC2H2,
+      },
+      celluloseRatio: celluloseResult.ratio,
+      paperRisk: celluloseResult.risk,
+      recommendedAction: actionProtocol.operationalActions[0] || 'Continue nominal SCADA telemetry monitoring.',
+      urgency: actionProtocol.severity || actionProtocol.severityLevel,
+    };
+  }, [currentScenario, currentGases, tdcgResult, duvalCoords, celluloseResult, actionProtocol]);
+
   // --- Handlers & Scenario Switching ---
   const handleSelectScenario = (key: string) => {
     setCurrentScenario(key);
@@ -226,6 +263,8 @@ export const App: React.FC = () => {
         paperRisk={celluloseResult.risk}
         isDarkMode={isDarkMode}
         onToggleTheme={handleToggleTheme}
+        onOpenVoiceBot={() => setIsVoiceBotOpen(true)}
+        hasSarvamKey={hasToken}
       />
 
       {/* Main Workspace Layout */}
@@ -286,6 +325,43 @@ export const App: React.FC = () => {
           </footer>
         </main>
       </div>
+
+      {/* Floating Sarvam AI Voice Assistant Orb */}
+      <div className="fixed bottom-5 right-5 z-30">
+        <button
+          onClick={() => setIsVoiceBotOpen(true)}
+          className="relative group flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-cyan-600 via-indigo-600 to-amber-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-xl shadow-cyan-600/30 hover:scale-105 transition-all cursor-pointer border border-white/20"
+          title="Open Sarvam AI Multilingual Voice Assistant"
+        >
+          <span className="relative flex h-2.5 w-2.5">
+            <span
+              className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+                hasToken ? 'bg-emerald-400' : 'bg-amber-400'
+              } opacity-75`}
+            ></span>
+            <span
+              className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                hasToken ? 'bg-emerald-400' : 'bg-amber-400'
+              }`}
+            ></span>
+          </span>
+          <Mic className="w-4 h-4 group-hover:scale-110 transition-transform" />
+          <span className="font-bold">Voice Bot</span>
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/25 text-cyan-200">
+            Sarvam
+          </span>
+        </button>
+      </div>
+
+      {/* Sarvam AI Multilingual Voice Bot Modal */}
+      <VoiceBotModal
+        isOpen={isVoiceBotOpen}
+        onClose={() => {
+          setIsVoiceBotOpen(false);
+          setHasToken(hasSarvamApiKey());
+        }}
+        transformerContext={liveTransformerContext}
+      />
     </div>
   );
 };

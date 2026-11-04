@@ -9,7 +9,8 @@ import {
   FileText,
   Sun,
   Moon,
-  Globe
+  Globe,
+  Mic
 } from 'lucide-react';
 import { SCENARIO_PRESETS, ScenarioInfo } from '../engine/scenarioPresets';
 import { StandardsReferenceModal } from './StandardsReferenceModal';
@@ -28,6 +29,8 @@ interface TopExecutiveBarProps {
   onToggleTheme?: () => void;
   ieeeStatus?: any;
   activeZoneCode?: string;
+  onOpenVoiceBot?: () => void;
+  hasSarvamKey?: boolean;
 }
 
 export const TopExecutiveBar: React.FC<TopExecutiveBarProps> = ({
@@ -42,6 +45,8 @@ export const TopExecutiveBar: React.FC<TopExecutiveBarProps> = ({
   paperRisk,
   isDarkMode = true,
   onToggleTheme,
+  onOpenVoiceBot,
+  hasSarvamKey = false,
 }) => {
   const scenariosList = Object.values(SCENARIO_PRESETS);
 
@@ -82,6 +87,22 @@ export const TopExecutiveBar: React.FC<TopExecutiveBarProps> = ({
 
         {/* DGA Standards & Regulatory Learning Tabs */}
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Sarvam AI Voice Bot Trigger */}
+          <button
+            onClick={onOpenVoiceBot}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono transition bg-gradient-to-r from-cyan-500/10 via-indigo-500/10 to-amber-500/10 border-cyan-400/50 hover:border-cyan-400 hover:text-cyan-700 text-slate-800 dark:text-cyan-300 dark:hover:text-cyan-200 cursor-pointer shadow-sm relative group"
+            title="Open Substation AI Voice Bot (Sarvam AI Multilingual Voice)"
+          >
+            <Mic className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 group-hover:scale-110 transition-transform" />
+            <span className="font-bold text-[11px]">Sarvam Voice Bot</span>
+            <span
+              className={`w-2 h-2 rounded-full ${
+                hasSarvamKey ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
+              }`}
+              title={hasSarvamKey ? 'Sarvam Token Connected' : 'Requires Sarvam Token'}
+            />
+          </button>
+
           <button
             onClick={() => handleOpenStandards('ieee')}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono transition bg-white border-slate-200 hover:border-cyan-400 hover:text-cyan-700 text-slate-700 hover:bg-slate-50 dark:bg-slate-900/90 dark:border-slate-800 dark:hover:border-cyan-500/50 dark:hover:text-cyan-300 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer shadow-sm"

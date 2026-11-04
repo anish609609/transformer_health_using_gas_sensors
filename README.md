@@ -25,6 +25,7 @@ This platform delivers an **Industrial Substation AI Digital Twin** combining an
 5. **Action & Mitigation Engine:** Translates diagnostic inferences directly into operational mitigating commands and field testing diagnostic work-orders.
 6. **Built-in DGA Regulatory Learning Hub:** Instant multi-tab reference covering IEEE C57.104-2019, IEC 60599 ratios, and IEC 61850 substation logical nodes (`SIML`, `GGIO`, `GOOSE`).
 7. **Full Dual-Theme Architecture:** Seamless Light and Dark mode support with high-contrast SVG rendering and persistent user preference.
+8. **Sarvam AI Multilingual Voice Bot:** Conversational real-time voice diagnostics powered by Sarvam AI (Bulbul neural TTS & Saaras speech recognition). Features interactive voice consultation across **3 languages (English, Hindi, and Tamil)** in a **casual, approachable control room engineer tone**, with automated telemetry awareness and token onboarding.
 
 ---
 
@@ -325,3 +326,30 @@ npm run train
 ## 📄 License
 
 This project is open source and available under the terms of the [MIT License](LICENSE).
+
+
+---
+
+## 🎙️ Sarvam AI Multilingual Voice Bot Integration
+
+The digital twin includes an interactive, conversational voice assistant powered by **Sarvam AI** APIs:
+
+### 1. Token Setup & Onboarding
+- When opening the Voice Bot for the first time, users are prompted to enter their **Sarvam AI API subscription key**.
+- If a user does not have an API key, the modal directly provides the link to [Sarvam AI Developer Dashboard](https://dashboard.sarvam.ai/) where they can register and generate their free token in seconds.
+- Keys are saved locally in the browser (\localStorage\) and can be updated, tested, or cleared at any time.
+
+### 2. Supported Languages (3 Languages)
+The voice bot natively supports three primary languages with one-click instant toggling:
+1. 🇮🇳 **English (Indian)** (\en-IN\)
+2. 🇮🇳 **Hindi (हिंदी / Hinglish)** (\hi-IN\)
+3. 🇮🇳 **Tamil (தமிழ்)** (\	a-IN\)
+
+### 3. Casual Control Room Tone
+- Instead of stiff, academic reports, the assistant speaks in a **warm, conversational, casual engineer tone** (like an experienced substation colleague sitting next to you in the control room).
+- Responses are concise (2–3 spoken sentences) and tailored for real-time auditory briefing.
+
+### 4. Full Bidirectional Voice
+- **Speech-to-Text (STT):** Click the microphone button to speak in any of the 3 languages. Audio is recorded and transcribed via Sarvam AI's \saaras:v4\ model.
+- **Text-to-Speech (TTS):** Generates neural speech playback via Sarvam AI's \ulbul:v3\ model with speaker selection (\Meera\, \Arvind\, \Shubh\).
+- **Telemetry Awareness:** The bot is fed live sensor readings (, CH_4, C_2H_6, C_2H_4, C_2H_2, CO, CO_2$), TDCG scores, Duval Triangle 1 coordinates, and recommended IEEE action protocols in real time.
